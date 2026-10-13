@@ -1,55 +1,84 @@
-# 中国计量大学 · 校园问答机器人（campus-qa-bot）
+# 量大智答 · 校园问答机器人
 
-基于 **Node.js + Express + React + DeepSeek API** 的校园问答智能体实验作品。
-机器人角色："量量"，只回答与中国计量大学校园相关的问题，无关问题自动拒答。
+面向中国计量大学（CJLU）的校园智能问答机器人。基于 **DeepSeek 大模型 + 本地知识库语义检索（RAG）**，
+支持多轮对话、知识库溯源、无关问题拒答，并内置工业化安全防线与测试体系。
 
-## 一、目录结构
-```
-campus-qa-bot/
-├── server.js                 # Express 后端：/api/chat，注入提示词+知识库，调用 DeepSeek
-├── documents/CJLU.txt        # ★ 本地知识库（新增 txt 会自动被载入）
-├── src/App.jsx               # React 聊天界面
-├── src/main.jsx, styles.css  # 前端入口与样式
-├── index.html, vite.config.js
-├── tests/screenshot_bot.py   # Playwright 自动化测试 + 截图脚本
-├── scripts/generate_report.py# python-docx 生成实验报告
-├── screenshots/              # 自动生成的截图（A 验证知识库 / B 验证拒答）
-├── templates/report_template.docx  # 由"实验报告格式.doc"转换而来的报告模板
-└── .env.example              # 环境变量示例（DEEPSEEK_API_KEY）
-```
+## 技术栈
+| 层 | 技术 |
+|---|---|
+| 前端 | React 18 + Vite 5 + TypeScript |
+| 后端 | Express 4 + TypeScript（tsx 运行） |
+| 大模型 | DeepSeek API（deepseek-chat，OpenAI 兼容协议） |
+| 语义检索 | @xenova/transformers（all-MiniLM-L6-v2 本地 ONNX，经 hf-mirror）+ TF-IDF 降级 |
+| 安全 | helmet + CORS 白名单 + express-rate-limit + 轻量鉴权 + 防提示词注入 |
+| 测试 | smoke / edge / final_acceptance 三套脚本（49 项） |
 
-## 二、提示词修改位置（作业要求：AI 写代码，自己写提示词）
-- **系统提示词**：`server.js` → `buildSystemPrompt()` 函数内部（文件开头有 ★ 注释指引）。
-  角色设定、拒答规则、语气要求都在这个函数的中文数组里，直接修改即可。
-- **知识库**：`documents/*.txt`，重启服务后自动生效。
+## 目录结构
+    .
+    ├── server.ts              # 后端入口（Express + 双闸门 + 语义检索 + DeepSeek）
+    ├── lib/
+    │   ├── retriever.ts       # 语义检索引擎（切块→向量化→Top3→热更新）
+    │   ├── gate.ts            # 拒答闸门（别名快判 + 意图分类兜底）
+    │   └── prompt.ts          # 系统提示词（含防提示词注入）
+    ├── documents/             # ★ 本地知识库（.txt/.md，增删即热更新，免重启）
+    ├── src/                   # React 前端（含来源徽标）
+    ├── tests/                 # smoke_test / edge_test / final_acceptance
+    ├── scripts/               # scan_secrets.py 等工具
+    ├── .trae/documents/       # PRD.md / tech-arch.md / dev-plan.md
+    ├── tsconfig.json          # 后端类型检查
+    └── tsconfig.app.json      # 前端类型检查
 
-## 三、运行方法
-```bash
-# 1. 安装依赖
-npm install
+## 环境要求
+- Node.js ≥ 20（推荐 22+）
+- npm
+- （可选）Python 3 用于跑测试脚本
 
-# 2. 配置 API Key（严禁写进代码，使用环境变量）
-cp .env.example .env
-# 编辑 .env：DEEPSEEK_API_KEY=sk-你的Key
-# 或者临时：export DEEPSEEK_API_KEY=sk-你的Key
+## 从零启动步骤
+    # 1. 安装依赖
+    npm install
 
-# 3. 构建前端并启动后端
-npm run build
-node server.js
-# 浏览器打开 http://localhost:3000
-```
+    # 2. 配置 API Key（严禁写进代码，写入 .env，已 gitignore）
+    cp .env.example .env
+    # 编辑 .env：DEEPSEEK_API_KEY=sk-你的Key
 
-> 未配置 `DEEPSEEK_API_KEY` 时，服务会自动进入 **离线知识库模式**：
-> 用本地检索回答校园问题、拒绝无关问题，保证演示与截图可复现；
-> 配置 Key 后自动切换为 DeepSeek 在线模式，界面右上角徽标会显示当前模式。
+    # 3. 构建前端
+    npm run build
 
-## 四、自动化测试与截图
-```bash
-python3 -m pip install playwright
-python3 -m playwright install chromium
-python3 tests/screenshot_bot.py
-```
-输出：`screenshots/screenshot_A_knowledge.png`、`screenshots/screenshot_B_refusal.png`、`screenshots/answers.json`
+    # 4. 启动后端（默认端口 3000）
+    npm start
+    # 开发模式（热重载）：npm run dev
 
-## 五、安全说明
-API Key 只从环境变量 `DEEPSEEK_API_KEY` 读取，代码中不含任何密钥；`.env` 已被 `.gitignore` 忽略。
+    # 5. 浏览器打开 http://localhost:3000
+
+## 类型检查
+    npm run typecheck   # 后端 + 前端双端 tsc --noEmit，零错误
+
+## 测试
+先启动服务，然后：
+    python3 scripts/scan_secrets.py        # 密钥泄露扫描
+    python3 tests/smoke_test.py            # 10 项核心回归
+    python3 tests/edge_test.py             # 17 项边缘/对抗
+    python3 tests/final_acceptance.py      # 22 项总体验收
+    # 可指定服务地址：BASE_URL=http://localhost:3000 python3 tests/smoke_test.py
+
+## 安全设计（四层纵深）
+1. **接入层**：限流（默认 120 req/min/IP，可调 RATE_LIMIT_PER_MIN）、CORS 白名单（CORS_ORIGINS）、
+   轻量鉴权（设置 API_AUTH_KEY 后要求 X-API-Key 头）。
+2. **闸门层**：别名快判 + 大模型意图分类兜底，先闸门后注入，拒答与检索解耦。
+3. **提示词层**：防间接提示词注入，知识库内容一律视为数据而非指令。
+4. **前端层**：React 默认转义 + 三态来源徽标（知识库命中 / 大模型泛答 / 拒答）。
+
+## 知识库
+- 知识库位于 documents/ 目录，支持 .txt / .md，UTF-8 编码。
+- 增删改文件后**无需重启**，检索引擎自动热更新（按文件名+mtime+size 指纹判重）。
+- 命中知识库时，回答末尾自动附【来源：文件名】溯源标签。
+
+## 提示词修改位置
+- 系统提示词：lib/prompt.ts 的 buildSystemPrompt()
+- 拒答规则：lib/gate.ts 的 quickGate() 与 classifyIntent()
+- 知识库：documents/*.txt
+
+## 文档
+- .trae/documents/PRD.md —— 产品需求文档
+- .trae/documents/tech-arch.md —— 技术架构文档
+- .trae/documents/dev-plan.md —— 里程碑开发计划（M1-M7）

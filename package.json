@@ -5,18 +5,30 @@
   "type": "module",
   "description": "中国计量大学校园问答机器人 (Express + React + DeepSeek API)",
   "scripts": {
-    "dev": "node server.js",
+    "dev": "tsx watch server.ts",
     "build": "vite build",
-    "start": "node server.js"
+    "start": "tsx server.ts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.app.json"
   },
   "dependencies": {
+    "@xenova/transformers": "^2.17.2",
+    "cors": "^2.8.6",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
     "vite": "^5.4.2"
   }
 }
