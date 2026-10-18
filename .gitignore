@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .env
+documents/inbox/
 screenshots/*.png
 !screenshots/.gitkeep
 .vercel

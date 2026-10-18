@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""密钥泄露扫描：检查前端产物与源码是否泄露 sk- 密钥。"""
+"""密钥泄露扫描：检查源码与产物是否泄露 sk-、github_pat_、ghp_、Bearer 密钥。"""
 import re
 import sys
 import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-PAT = re.compile(r'sk-[A-Za-z0-9]{16,}')
+PAT = re.compile(
+    r'sk-[A-Za-z0-9]{16,}|'
+    r'github_pat_[A-Za-z0-9]{20,}|'
+    r'ghp_[A-Za-z0-9]{20,}|'
+    r'Bearer [A-Za-z0-9._~+/=-]{8,}'
+)
 SCAN_DIRS = ['dist', 'src', 'api', 'lib']
+EXTENSIONS = {'.js', '.ts', '.tsx', '.jsx', '.html', '.css', '.json', '.mjs', '.cjs', '.map'}
 
 
 def scan():
@@ -19,14 +25,15 @@ def scan():
         for f in p.rglob('*'):
             if not f.is_file():
                 continue
-            if f.suffix not in {'.js', '.ts', '.tsx', '.jsx', '.html', '.css', '.json', '.mjs', '.cjs', '.map'}:
+            if f.suffix not in EXTENSIONS:
                 continue
             try:
                 txt = f.read_text(encoding='utf-8', errors='ignore')
             except Exception:
                 continue
             for m in PAT.findall(txt):
-                leaks.append((str(f.relative_to(ROOT)), m[:8] + '***'))
+                masked = m[:8] + '***'
+                leaks.append((str(f.relative_to(ROOT)), masked))
     return leaks
 
 
