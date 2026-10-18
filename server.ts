@@ -32,6 +32,7 @@ const uploadLimiter = new Limiter(config.uploadRateHour, config.uploadRateDay);
 const feedbackLimiter = new Limiter(config.uploadRateHour, config.uploadRateDay);
 
 const app = express();
+app.set('trust proxy', 1);
 app.use(helmet());
 app.use(express.json({ limit: '1mb' }));
 

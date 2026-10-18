@@ -15,7 +15,6 @@ export default function App() {
   const speech = useSpeechSynthesis();
   const [personalOpen, setPersonalOpen] = useState(false);
   const [personalEntries, setPersonalEntries] = useState<PersonalQaEntry[]>(() => listPersonalQa());
-  const [includePersonal, setIncludePersonal] = useState(false);
 
   useEffect(() => {
     document.title = chat.state.view === 'chat' ? copy.app.activeTitle : copy.app.title;
@@ -44,10 +43,13 @@ export default function App() {
   }, []);
 
   const handleExport = useCallback((): void => {
-    const exported = exportConversation(chat.state.messages, includePersonal, personalEntries);
+    const withPersonal = personalEntries.length > 0
+      ? window.confirm('导出对话时是否包含个人问答？\n\n确定 = 包含，取消 = 不包含')
+      : false;
+    const exported = exportConversation(chat.state.messages, withPersonal, personalEntries);
     if (!exported) window.alert(copy.chat.exportEmpty);
     else window.alert(copy.chat.exportReady);
-  }, [chat.state.messages, includePersonal, personalEntries]);
+  }, [chat.state.messages, personalEntries]);
 
   const handleClear = useCallback((): void => {
     if (window.confirm(copy.chat.clearConfirm)) chat.clearMessages();
@@ -85,10 +87,6 @@ export default function App() {
       />
       <div className="chat-transition">{chatShell}</div>
       <UploadPanel open={chat.state.uploadOpen} onClose={() => chat.setUploadOpen(false)} />
-      <label className="sr-only">
-        <input type="checkbox" checked={includePersonal} onChange={(event) => setIncludePersonal(event.target.checked)} />
-        {copy.chat.exportPersonal}
-      </label>
     </main>
   );
 }
