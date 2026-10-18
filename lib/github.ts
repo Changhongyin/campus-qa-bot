@@ -1,8 +1,11 @@
 /**
- * GitHub REST API client (no dependencies).
- * Handles PR creation, file operations, issue opening with retries and error normalization.
+ * GitHub REST API client built on global fetch (no dependencies).
+ *
+ * - 10 s timeout per call.
+ * - 2 retries (400 ms, then 1200 ms) on network errors, HTTP 429 and HTTP 5xx.
+ *   A Retry-After header is respected, capped at 5 s so a request never hangs for long.
+ * - Errors are normalized to GitHubError. Messages never contain the token or an upstream body.
  */
-import { config } from './config.js';
 
 export type GitHubErrorKind = 'auth' | 'not_found' | 'rate_limited' | 'conflict' | 'upstream';
 
@@ -18,186 +21,201 @@ export class GitHubError extends Error {
   }
 }
 
-interface Ref {
-  object: { sha: string };
+const USER_AGENT = 'CampusQA-Contribution-Bot';
+const REQUEST_TIMEOUT_MS = 10000;
+const RETRY_DELAYS_MS: readonly number[] = [400, 1200];
+const MAX_RETRY_AFTER_MS = 5000;
+
+type HttpMethod = 'GET' | 'POST' | 'PUT';
+
+interface CallResult {
+  status: number;
+  data: unknown;
 }
 
-interface CommitResponse {
-  sha: string;
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 }
 
-interface PullRequestResponse {
-  html_url: string;
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-interface IssueResponse {
-  html_url: string;
+function encodePath(value: string): string {
+  return value.split('/').map((segment) => encodeURIComponent(segment)).join('/');
+}
+
+function classify(resp: Response): GitHubErrorKind {
+  const status = resp.status;
+  if (status === 401) return 'auth';
+  if (status === 403) {
+    const limited = resp.headers.get('x-ratelimit-remaining') === '0' || resp.headers.get('retry-after') !== null;
+    return limited ? 'rate_limited' : 'auth';
+  }
+  if (status === 404) return 'not_found';
+  if (status === 409 || status === 422) return 'conflict';
+  if (status === 429) return 'rate_limited';
+  return 'upstream';
+}
+
+function retryDelay(resp: Response, baseMs: number): number {
+  const header = resp.headers.get('retry-after');
+  const seconds = header === null ? Number.NaN : Number(header);
+  if (Number.isFinite(seconds) && seconds > 0) {
+    return Math.min(MAX_RETRY_AFTER_MS, Math.max(baseMs, Math.floor(seconds * 1000)));
+  }
+  return baseMs;
+}
+
+async function discard(resp: Response): Promise<void> {
+  try {
+    await resp.body?.cancel();
+  } catch {
+    // The body is already closed.
+  }
+}
+
+async function parseBody(resp: Response): Promise<unknown> {
+  const text = await resp.text();
+  if (text.length === 0) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new GitHubError('upstream', 'GitHub returned an invalid JSON payload', resp.status);
+  }
 }
 
 export class GitHubClient {
-  private baseUrl: string;
-  private owner: string;
-  private repo: string;
-  private token: string;
-  private readonly timeoutMs = 10000;
-  private readonly retries = 2;
-  private readonly backoffs = [400, 1200];
+  private readonly apiBase: string;
+  private readonly repoPath: string;
+  private readonly token: string;
 
-  constructor(owner: string, repo: string, token: string, baseUrl: string = 'https://api.github.com') {
-    this.owner = owner;
-    this.repo = repo;
+  constructor(owner: string, repo: string, token: string, apiBase: string = 'https://api.github.com') {
+    this.apiBase = apiBase.replace(/\/+$/, '');
+    this.repoPath = '/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo);
     this.token = token;
-    this.baseUrl = baseUrl.replace(/\/+$/, '');
   }
 
-  private headers(): Record<string, string> {
-    return {
-      'User-Agent': 'CampusQA-Contribution-Bot',
-      'Accept': 'application/vnd.github+json',
+  private headers(hasBody: boolean): Record<string, string> {
+    const headers: Record<string, string> = {
+      'User-Agent': USER_AGENT,
+      Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
-      'Authorization': 'token ' + this.token,
+      Authorization: 'token ' + this.token,
     };
+    if (hasBody) headers['Content-Type'] = 'application/json';
+    return headers;
   }
 
-  private async fetchWithRetry(
-    url: string,
-    options: RequestInit,
-  ): Promise<Response> {
-    let lastError: Error | null = null;
-    for (let attempt = 0; attempt <= this.retries; attempt++) {
+  private async call(
+    method: HttpMethod,
+    apiPath: string,
+    body?: unknown,
+    allowNotFound: boolean = false,
+  ): Promise<CallResult> {
+    const url = this.apiBase + apiPath;
+    const payload = body === undefined ? undefined : JSON.stringify(body);
+    let attempt = 0;
+    for (;;) {
+      let resp: Response;
       try {
-        const controller = new AbortController();
-        const timeoutHandle = setTimeout(() => controller.abort(), this.timeoutMs);
-        try {
-          const resp = await fetch(url, { ...options, signal: controller.signal });
-          clearTimeout(timeoutHandle);
-          return resp;
-        } finally {
-          clearTimeout(timeoutHandle);
-        }
-      } catch (err) {
-        lastError = err instanceof Error ? err : new Error(String(err));
-        if (attempt < this.retries) {
-          const delay = this.backoffs[attempt] ?? 1000;
-          await new Promise((resolve) => setTimeout(resolve, delay));
-        }
-      }
-    }
-    throw lastError || new Error('fetch failed');
-  }
-
-  private async handleResponse<T>(resp: Response): Promise<T> {
-    const text = await resp.text();
-    if (!resp.ok) {
-      let body: unknown;
-      try {
-        body = JSON.parse(text);
+        resp = await fetch(url, {
+          method,
+          headers: this.headers(payload !== undefined),
+          body: payload,
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        });
       } catch {
-        body = text;
+        if (attempt >= RETRY_DELAYS_MS.length) {
+          throw new GitHubError('upstream', 'GitHub request failed (network error or timeout)');
+        }
+        await sleep(RETRY_DELAYS_MS[attempt]);
+        attempt++;
+        continue;
       }
-      this.throwForStatus(resp.status, body);
-    }
-    try {
-      return JSON.parse(text);
-    } catch {
-      throw new GitHubError('upstream', 'invalid JSON response from GitHub', resp.status);
+
+      if ((resp.status === 429 || resp.status >= 500) && attempt < RETRY_DELAYS_MS.length) {
+        const delay = retryDelay(resp, RETRY_DELAYS_MS[attempt]);
+        await discard(resp);
+        await sleep(delay);
+        attempt++;
+        continue;
+      }
+
+      if (resp.ok) {
+        return { status: resp.status, data: await parseBody(resp) };
+      }
+      if (resp.status === 404 && allowNotFound) {
+        await discard(resp);
+        return { status: 404, data: null };
+      }
+      const kind = classify(resp);
+      const status = resp.status;
+      await discard(resp);
+      throw new GitHubError(kind, 'GitHub API error (HTTP ' + status + ')', status);
     }
   }
 
-  private throwForStatus(status: number, body: unknown): never {
-    if (status === 401 || status === 403) {
-      throw new GitHubError('auth', 'GitHub authentication failed', status);
+  async getRepo(): Promise<{ defaultBranch: string; isPrivate: boolean }> {
+    const data = asRecord((await this.call('GET', this.repoPath)).data);
+    const defaultBranch = data?.default_branch;
+    if (typeof defaultBranch !== 'string') {
+      throw new GitHubError('upstream', 'GitHub returned an unexpected repository payload');
     }
-    if (status === 404) {
-      throw new GitHubError('not_found', 'GitHub resource not found', status);
-    }
-    if (status === 409) {
-      throw new GitHubError('conflict', 'GitHub conflict (branch may already exist)', status);
-    }
-    if (status === 429) {
-      throw new GitHubError('rate_limited', 'GitHub rate limit exceeded', status);
-    }
-    if (status >= 500) {
-      throw new GitHubError('upstream', 'GitHub API error (HTTP ' + status + ')', status);
-    }
-    throw new GitHubError('upstream', 'GitHub API error (HTTP ' + status + ')', status);
+    return { defaultBranch, isPrivate: data?.private === true };
   }
 
   async getRef(branch: string): Promise<string> {
-    const url = this.baseUrl + '/repos/' + this.owner + '/' + this.repo + '/git/ref/heads/' + branch;
-    const resp = await this.fetchWithRetry(url, { method: 'GET', headers: this.headers() });
-    const data = await this.handleResponse<Ref>(resp);
-    return data.object.sha;
+    const data = asRecord((await this.call('GET', this.repoPath + '/git/ref/heads/' + encodePath(branch))).data);
+    const sha = asRecord(data?.object)?.sha;
+    if (typeof sha !== 'string' || sha.length === 0) {
+      throw new GitHubError('upstream', 'GitHub returned an unexpected ref payload');
+    }
+    return sha;
   }
 
   async createRef(branch: string, sha: string): Promise<void> {
-    const url = this.baseUrl + '/repos/' + this.owner + '/' + this.repo + '/git/refs';
-    const resp = await this.fetchWithRetry(url, {
-      method: 'POST',
-      headers: this.headers(),
-      body: JSON.stringify({ ref: 'refs/heads/' + branch, sha }),
+    await this.call('POST', this.repoPath + '/git/refs', { ref: 'refs/heads/' + branch, sha });
+  }
+
+  /** Creates a file on a branch and returns the new commit sha. */
+  async putFile(path: string, contentBase64: string, message: string, branch: string): Promise<string> {
+    const result = await this.call('PUT', this.repoPath + '/contents/' + encodePath(path), {
+      message,
+      content: contentBase64,
+      branch,
     });
-    if (!resp.ok) {
-      const body = await resp.text();
-      try {
-        const json = JSON.parse(body);
-        this.throwForStatus(resp.status, json);
-      } catch {
-        this.throwForStatus(resp.status, body);
-      }
+    const sha = asRecord(asRecord(result.data)?.commit)?.sha;
+    if (typeof sha !== 'string' || sha.length === 0) {
+      throw new GitHubError('upstream', 'GitHub returned an unexpected commit payload');
     }
+    return sha;
   }
 
-  async putFile(
-    path: string,
-    contentBase64: string,
-    message: string,
-    branch: string,
-  ): Promise<string> {
-    const url = this.baseUrl + '/repos/' + this.owner + '/' + this.repo + '/contents/' + path;
-    const resp = await this.fetchWithRetry(url, {
-      method: 'PUT',
-      headers: this.headers(),
-      body: JSON.stringify({ message, content: contentBase64, branch }),
-    });
-    const data = await this.handleResponse<CommitResponse>(resp);
-    return data.sha;
-  }
-
-  async openPullRequest(params: {
-    title: string;
-    head: string;
-    base: string;
-    body: string;
-  }): Promise<string> {
-    const url = this.baseUrl + '/repos/' + this.owner + '/' + this.repo + '/pulls';
-    const resp = await this.fetchWithRetry(url, {
-      method: 'POST',
-      headers: this.headers(),
-      body: JSON.stringify(params),
-    });
-    const data = await this.handleResponse<PullRequestResponse>(resp);
-    return data.html_url;
-  }
-
-  async openIssue(title: string, body: string): Promise<string> {
-    const url = this.baseUrl + '/repos/' + this.owner + '/' + this.repo + '/issues';
-    const resp = await this.fetchWithRetry(url, {
-      method: 'POST',
-      headers: this.headers(),
-      body: JSON.stringify({ title, body }),
-    });
-    const data = await this.handleResponse<IssueResponse>(resp);
-    return data.html_url;
-  }
-
-  async fileExists(path: string): Promise<boolean> {
-    const url = this.baseUrl + '/repos/' + this.owner + '/' + this.repo + '/contents/' + path;
-    try {
-      const resp = await this.fetchWithRetry(url, { method: 'GET', headers: this.headers() });
-      return resp.ok;
-    } catch {
-      return false;
+  async openPullRequest(params: { title: string; head: string; base: string; body: string }): Promise<string> {
+    const data = asRecord((await this.call('POST', this.repoPath + '/pulls', params)).data);
+    const url = data?.html_url;
+    if (typeof url !== 'string') {
+      throw new GitHubError('upstream', 'GitHub returned an unexpected pull request payload');
     }
+    return url;
+  }
+
+  async openIssue(params: { title: string; body: string }): Promise<string> {
+    const data = asRecord((await this.call('POST', this.repoPath + '/issues', params)).data);
+    const url = data?.html_url;
+    if (typeof url !== 'string') {
+      throw new GitHubError('upstream', 'GitHub returned an unexpected issue payload');
+    }
+    return url;
+  }
+
+  /** True when the path exists on the branch (or the default branch when none is given). */
+  async fileExists(path: string, branch?: string): Promise<boolean> {
+    const query = branch ? '?ref=' + encodeURIComponent(branch) : '';
+    const result = await this.call('GET', this.repoPath + '/contents/' + encodePath(path) + query, undefined, true);
+    return result.status !== 404;
   }
 }

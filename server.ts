@@ -2,13 +2,13 @@
  * 量大智答 —— Express 后端（TypeScript）
  * 接入层：helmet + CORS 白名单 + express-rate-limit + 轻量鉴权
  * 核心：SSE chat streaming + 文件上传 + 反馈收集 + 双闸门检索
+ * All endpoint logic lives in lib/handlers/*; this file only wires middleware and routes.
  */
 import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config, assertServerConfig } from './lib/config.js';
@@ -16,6 +16,8 @@ import { Retriever } from './lib/retriever.js';
 import { createChatHandler } from './lib/handlers/chat.js';
 import { createUploadHandler } from './lib/handlers/upload.js';
 import { createFeedbackHandler } from './lib/handlers/feedback.js';
+import { createHealthHandler } from './lib/handlers/health.js';
+import { createKnowledgeHandler } from './lib/handlers/knowledge.js';
 import { Limiter } from './lib/limiter.js';
 import { errorLabel } from './lib/redact.js';
 
@@ -25,6 +27,7 @@ const DOCS_DIR = path.join(__dirname, 'documents');
 const retriever = new Retriever(DOCS_DIR);
 await retriever.init();
 
+// Separate counters for upload and feedback (same limits, independent buckets).
 const uploadLimiter = new Limiter(config.uploadRateHour, config.uploadRateDay);
 const feedbackLimiter = new Limiter(config.uploadRateHour, config.uploadRateDay);
 
@@ -59,43 +62,8 @@ app.use('/api/chat', chatLimiter);
 
 app.use(express.static(path.join(__dirname, 'dist')));
 
-app.get('/api/health', (_req, res) => {
-  const mode = config.deepseekApiKey.length > 0 ? 'deepseek' : 'offline';
-  res.json({
-    ok: true,
-    model: config.deepseekModel,
-    apiKeyConfigured: Boolean(config.deepseekApiKey),
-    authEnabled: Boolean(config.authKey),
-    rateLimitPerMin: config.rateLimitPerMin,
-    retriever: retriever.stats,
-    mode,
-    contributions: {
-      enabled: config.contributionsEnabled,
-      mode: config.contributionMode,
-      maxBytes: config.contributionMaxBytes,
-    },
-    version: '2.0.0',
-  });
-});
-
-app.get('/api/knowledge', (_req, res) => {
-  const files = fs.existsSync(DOCS_DIR)
-    ? fs.readdirSync(DOCS_DIR).filter((f) => f.endsWith('.txt') || f.endsWith('.md')).sort()
-    : [];
-  res.json({
-    datastore: 'local-text-files',
-    note: '本项目未使用数据库，数据源为 documents/ 目录下的纯文本知识库',
-    files: files.map((f) => {
-      const text = fs.readFileSync(path.join(DOCS_DIR, f), 'utf8');
-      return { name: f, chars: text.length, lines: text.split('\n').length };
-    }),
-    retriever: retriever.stats,
-    contributions: {
-      files: 0,
-    },
-  });
-});
-
+app.get('/api/health', createHealthHandler({ retriever }));
+app.get('/api/knowledge', createKnowledgeHandler({ retriever, docsDir: DOCS_DIR }));
 app.post('/api/chat', createChatHandler({ retriever }));
 app.post('/api/upload', createUploadHandler(uploadLimiter));
 app.post('/api/feedback', createFeedbackHandler(feedbackLimiter));
@@ -116,7 +84,8 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     res.status(413).json({ error: '请求内容过大，请精简后重试', code: 'PAYLOAD_TOO_LARGE' });
     return;
   }
-  const clientError = typeof info.status === 'number' && info.status >= 400 && info.status < 500;
+  const clientError =
+    typeof info.status === 'number' && info.status >= 400 && info.status < 500;
   if (clientError || info.type === 'entity.parse.failed' || err instanceof SyntaxError) {
     res.status(400).json({ error: '请求格式不正确，请提交合法的 JSON', code: 'BAD_REQUEST' });
     return;
@@ -132,6 +101,7 @@ app.listen(config.port, () => {
   console.log('模式:', config.deepseekApiKey ? 'DeepSeek 在线' : '离线');
   console.log('检索引擎:', retriever.stats.engine);
   console.log('贡献功能:', config.contributionsEnabled ? config.contributionMode : '已禁用');
+  // 后台预热嵌入模型（首次请求不卡顿）
   retriever.search('中国计量大学')
     .then(() => console.log('检索引擎预热完成:', JSON.stringify(retriever.stats)))
     .catch(() => console.log('嵌入不可用，降级为 TF-IDF'));
