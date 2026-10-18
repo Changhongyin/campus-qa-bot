@@ -1,0 +1,56 @@
+:root {
+  color: #17243a;
+  background: #f4f7fb;
+  font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+body { min-width: 320px; min-height: 100dvh; margin: 0; }
+
+button, textarea { font: inherit; }
+
+button { cursor: pointer; }
+
+button:focus-visible, textarea:focus-visible {
+  outline: 3px solid rgba(31, 95, 214, .36);
+  outline-offset: 3px;
+}
+
+button:disabled { cursor: not-allowed; opacity: .52; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.app { min-height: 100dvh; overflow-x: hidden; }
+
+.button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-weight: 700;
+}
+
+.button--primary {
+  color: #fff;
+  background: linear-gradient(135deg, #1f5fd6, #17a673);
+  box-shadow: 0 10px 24px rgba(31, 95, 214, .22);
+}
+
+.icon-button, .text-button {
+  border: 0;
+  color: #2355ae;
+  background: transparent;
+}
+
+.icon-button { min-width: 40px; min-height: 40px; border-radius: 10px; font-size: 22px; }
+
+.text-button { min-height: 40px; padding: 0 8px; font-size: 14px; font-weight: 700; }

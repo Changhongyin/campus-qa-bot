@@ -1,0 +1,59 @@
+.landing {
+  position: relative;
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: 32px 20px;
+  overflow: hidden;
+  background: linear-gradient(150deg, #e8f1ff 0%, #f6faff 42%, #e4f7ef 100%);
+}
+
+.landing__content {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 680px);
+  text-align: center;
+}
+
+.brand-mark {
+  display: inline-grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border-radius: 18px;
+  color: #fff;
+  background: linear-gradient(135deg, #1f5fd6, #17a673);
+  box-shadow: 0 12px 30px rgba(31, 95, 214, .26);
+  font-size: 27px;
+  font-weight: 800;
+}
+
+.landing__eyebrow { margin: 28px 0 12px; color: #3073bd; font-size: 14px; font-weight: 700; }
+
+.landing h1 { max-width: 620px; margin: 0 auto; letter-spacing: -.04em; font-size: clamp(32px, 6vw, 58px); line-height: 1.18; }
+
+.landing__description { margin: 20px 0 28px; color: #607087; font-size: 17px; }
+
+.landing__chips { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 0; margin: 0 0 30px; list-style: none; }
+
+.landing__chips li { padding: 7px 11px; border: 1px solid #dce6f6; border-radius: 999px; color: #46607e; background: rgba(255,255,255,.76); font-size: 13px; }
+
+.landing__cta { min-width: 160px; }
+
+.landing__upload { display: block; margin: 16px auto; border: 0; color: #3361a8; background: transparent; font-size: 14px; }
+
+.landing__privacy { max-width: 450px; margin: 24px auto 0; color: #7a889a; font-size: 12px; line-height: 1.7; }
+
+.landing__orb { position: absolute; width: 42vmax; aspect-ratio: 1; border-radius: 50%; filter: blur(12px); opacity: .3; animation: drift 14s ease-in-out infinite alternate; }
+
+.landing__orb--one { top: -20vmax; left: -14vmax; background: #77a9f5; }
+
+.landing__orb--two { right: -18vmax; bottom: -22vmax; background: #5ed0a4; animation-delay: -13s; }
+
+.landing__grid { position: absolute; inset: 0; opacity: .22; background-image: linear-gradient(#a7bddc 1px, transparent 1px), linear-gradient(90deg, #a7bddc 1px, transparent 1px); background-size: 34px 34px; mask-image: linear-gradient(to bottom, transparent, #000 25%, transparent); }
+
+@keyframes drift { to { transform: translate3d(14vmax, 9vmax, 0) scale(1.15); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .landing__orb { animation: none; }
+}
