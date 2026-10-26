@@ -55,7 +55,7 @@ export const copy = {
     offline: '当前无法确认服务状态，仍可继续提问。',
     thinking: '正在整理回答…',
     interrupted: '回答已停止',
-    quickPrompts: ['校园卡丢失后怎么办？', '图书馆开放时间', '如何申请奖学金？'],
+    quickPrompts: ['中国计量大学的校训是什么？', '学校有哪些王牌专业？', '学校有多少个本科专业？'],
     reviewPending: '等待维护者审核',
     committed: '已提交维护者审核',
     localOnly: '仅完成本地预览，内容没有提交到知识库。',
