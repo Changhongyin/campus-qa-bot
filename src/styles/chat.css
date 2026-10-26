@@ -41,7 +41,7 @@
 
 .chat-header__brand { display: flex; min-width: 0; align-items: center; gap: 10px; flex: 1; color: var(--ink); }
 
-.chat-header__brand strong { white-space: nowrap; }
+.chat-header__brand strong { white-space: nowrap; font-family: var(--font-serif); }
 
 .chat-header__actions { display: flex; align-items: center; gap: 2px; }
 
@@ -109,7 +109,7 @@
 
 .chat-shell__body--empty .message--assistant .message__content { flex: 0 1 auto; max-width: 30em; padding: 0; border: 0; color: var(--ink-soft); }
 
-.chat-shell__body--empty .message__content p:first-child { margin-bottom: 6px; color: var(--ink); font-size: 22px; font-weight: 700; }
+.chat-shell__body--empty .message__content p:first-child { margin-bottom: 6px; color: var(--ink); font-size: 22px; font-weight: 700; font-family: var(--font-serif); }
 
 .chat-shell__body--empty .quick-prompts { justify-content: center; margin-top: 28px; padding-top: 0; border-top: 0; }
 

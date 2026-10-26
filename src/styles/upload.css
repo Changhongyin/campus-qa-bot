@@ -40,7 +40,7 @@
     var(--surface-muted);
 }
 
-.upload-panel h2 { margin: 0; font-size: 20px; }
+.upload-panel h2 { margin: 0; font-size: 20px; font-family: var(--font-serif); }
 
 .upload-panel header button {
   min-width: 40px;

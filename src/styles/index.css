@@ -1,7 +1,11 @@
 :root {
   color: #1b2a44;
   background: #f6f3eb;
-  font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
+  /* 中文正文：冬青黑体（本机系统字体）→ 苹方 / 微软雅黑 → 系统黑体 */
+  --font-sans: "Hiragino Sans GB", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  /* 中文标题：宋体（本机 Songti SC）→ 华文宋体 → 微软宋体 */
+  --font-serif: "Songti SC", "STSong", "SimSun", "Noto Serif SC", serif;
+  font-family: var(--font-sans);
   font-synthesis: none;
 }
 

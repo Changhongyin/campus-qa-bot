@@ -51,6 +51,7 @@
   box-shadow: inset 0 0 0 3px var(--ink), inset 0 0 0 4px var(--brass-line);
   font-size: 27px;
   font-weight: 800;
+  font-family: var(--font-serif);
 }
 
 .landing__scale, .landing__sheet-scale {
@@ -81,6 +82,7 @@
   max-width: 12em;
   margin: 0;
   color: var(--ink);
+  font-family: var(--font-serif);
   letter-spacing: -.04em;
   font-size: clamp(32px, 4.6vw, 52px);
   line-height: 1.22;
