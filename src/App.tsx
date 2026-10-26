@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { copy } from './copy';
 import { ChatShell } from './components/ChatShell';
 import { FieldBackdrop } from './components/FieldBackdrop';
@@ -14,6 +14,7 @@ import './styles.css';
 export default function App() {
   const chat = useChatStream();
   const speech = useSpeechSynthesis();
+  const lastSpokenRef = useRef<string | null>(null);
   const [personalOpen, setPersonalOpen] = useState(false);
   const [personalEntries, setPersonalEntries] = useState<PersonalQaEntry[]>(() => listPersonalQa());
 
@@ -24,6 +25,30 @@ export default function App() {
   useEffect(() => {
     void getHealth().then((health) => chat.setHealth(health.mode, health.contributions.enabled)).catch(() => chat.setHealth('unknown', false));
   }, []);
+
+  // 朗读：每当出现一条新的机器人回答（且朗读开关开启）就自动读出来。
+  useEffect(() => {
+    if (!speech.enabled) return;
+    const last = [...chat.state.messages].reverse().find((message) => message.role === 'assistant' && message.content.trim());
+    if (!last || last.id === lastSpokenRef.current) return;
+    lastSpokenRef.current = last.id;
+    speech.speak(last.content);
+  }, [chat.state.messages, speech.enabled, speech.speak]);
+
+  const handleToggleTts = useCallback((): void => {
+    const next = !speech.enabled;
+    speech.setEnabled(next);
+    if (!next) {
+      lastSpokenRef.current = null;
+      return;
+    }
+    // 开启时立刻朗读最近一条回答（在用户手势内触发，浏览器才允许发声）。
+    const last = [...chat.state.messages].reverse().find((message) => message.role === 'assistant' && message.content.trim());
+    if (last) {
+      lastSpokenRef.current = last.id;
+      speech.speak(last.content);
+    }
+  }, [speech, chat.state.messages]);
 
   const handleSend = useCallback(async (text: string): Promise<void> => {
     speech.cancel();
@@ -67,7 +92,7 @@ export default function App() {
       onTyping={speech.cancel}
       ttsEnabled={speech.enabled}
       ttsSupported={speech.supported}
-      onToggleTts={() => speech.setEnabled(!speech.enabled)}
+      onToggleTts={handleToggleTts}
       personalEntries={personalEntries}
       personalOpen={personalOpen}
       onOpenPersonal={() => setPersonalOpen(true)}
@@ -77,10 +102,10 @@ export default function App() {
       onClear={handleClear}
       onExport={handleExport}
     />
-  ), [chat, handleSend, speech, personalEntries, personalOpen, handleSavePersonal, handleRemovePersonal, handleClear, handleExport]);
+  ), [chat, handleSend, handleToggleTts, speech, personalEntries, personalOpen, handleSavePersonal, handleRemovePersonal, handleClear, handleExport]);
 
   return (
-    <main className={`app app--${chat.state.view}`}>
+    <main className={chat.state.view === 'chat' ? 'app app--chat' : 'app app--landing'}>
       <FieldBackdrop />
       <LandingPage
         active={chat.state.view === 'landing'}
