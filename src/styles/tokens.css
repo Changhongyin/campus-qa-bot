@@ -1,0 +1,50 @@
+/* Design tokens: campus field notebook / precision-instrument desk.
+   Font families are intentionally absent here; the protected stack lives in index.css. */
+:root {
+  /* Paper and ink */
+  --paper: #f6f3eb;
+  --paper-deep: #efe9db;
+  --surface: #ffffff;
+  --surface-muted: #faf8f3;
+  --ink: #1b2a44;
+  --ink-soft: #3a4860;
+  --ink-muted: #5a6779;
+  --line: rgba(27, 42, 68, .12);
+  --line-strong: rgba(27, 42, 68, .24);
+  --grid: rgba(27, 42, 68, .045);
+
+  /* Accents */
+  --jade: #2d7a64;
+  --jade-strong: #226150;
+  --jade-soft: #e4f0ea;
+  --jade-line: rgba(45, 122, 100, .32);
+  --brass: #9c7a43;
+  --brass-soft: #f3ecdd;
+  --brass-line: rgba(156, 122, 67, .38);
+  --danger: #a33c48;
+  --danger-soft: #fbeef0;
+
+  /* Shape */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-surface: 0 1px 0 rgba(27, 42, 68, .04), 0 12px 32px -18px rgba(27, 42, 68, .28);
+  --shadow-press: inset 0 1px 2px rgba(0, 0, 0, .28);
+  --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--jade);
+
+  /* Motion: durations */
+  --dur-press: 120ms;
+  --dur-short: 200ms;
+  --dur-base: 320ms;
+  --dur-medium: 480ms;
+  --dur-long: 720ms;
+  --dur-intro: 1100ms;
+  --stagger: 55ms;
+
+  /* Motion: easing */
+  --ease-out: cubic-bezier(.2, .75, .25, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --ease-exit: cubic-bezier(.45, 0, .8, .4);
+  --ease-drift: cubic-bezier(.37, 0, .63, 1);
+}

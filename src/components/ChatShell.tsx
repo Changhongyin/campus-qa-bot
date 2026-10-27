@@ -31,7 +31,14 @@ interface ChatShellProps {
 
 export function ChatShell(props: ChatShellProps) {
   const ref = useRef<HTMLElement>(null);
-  useEffect(() => { ref.current?.focus(); }, []);
+  const active = props.state.view === 'chat';
+  useEffect(() => {
+    if (!active) return;
+    // Entering chat: focus the question input, falling back to the shell while it is disabled.
+    const input = ref.current?.querySelector<HTMLTextAreaElement>('#chat-input');
+    if (input && !input.disabled) input.focus({ preventScroll: true });
+    else ref.current?.focus({ preventScroll: true });
+  }, [active]);
   return (
     <section ref={ref} className="chat-shell" tabIndex={-1} aria-label={copy.app.title}>
       <header className="chat-header">

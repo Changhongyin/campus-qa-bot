@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { copy } from './copy';
 import { ChatShell } from './components/ChatShell';
+import { FieldBackdrop } from './components/FieldBackdrop';
 import { LandingPage } from './components/LandingPage';
 import { UploadPanel } from './components/UploadPanel';
 import { useChatStream } from './hooks/useChatStream';
@@ -80,7 +81,9 @@ export default function App() {
 
   return (
     <main className={`app app--${chat.state.view}`}>
+      <FieldBackdrop />
       <LandingPage
+        active={chat.state.view === 'landing'}
         onOpenChat={() => { chat.openChat(); sessionStorage.setItem('ldzd-opened', 'true'); }}
         onOpenUpload={() => chat.setUploadOpen(true)}
         contributionsEnabled={chat.state.contributionsEnabled}

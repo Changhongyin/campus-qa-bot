@@ -1,1 +1,165 @@
-.upload-backdrop{position:fixed;inset:0;z-index:10;display:flex;justify-content:flex-end;background:#10203a66}.upload-panel{width:min(100%,460px);height:100%;overflow:auto;padding:24px;background:#fff;box-shadow:-16px 0 48px #10203a26}.upload-panel header{display:flex;align-items:center;justify-content:space-between}.upload-panel header button{border:0;background:transparent;font-size:28px}.upload-panel p{color:#50627b;line-height:1.65}.upload-panel input:not([type=checkbox]){width:100%;margin:7px 0;padding:10px;border:1px solid #cdd9ea;border-radius:9px}.upload-panel label{display:flex;gap:8px;margin:14px 0;font-size:13px;line-height:1.5}.upload-dropzone{width:100%;margin:14px 0;padding:30px 12px;border:1px dashed #6d9ee2;border-radius:12px;color:#2355ae;background:#f5f9ff}.upload-error{color:#a33c48!important}.upload-success{color:#16734d!important}.personal-entry{margin:12px 0;padding:12px;border:1px solid #dce6f2;border-radius:12px}.personal-entry p{margin:8px 0}.personal-entry button{margin-right:8px}.personal-form{padding-top:12px;border-top:1px solid #e6edf7}.personal-form label{display:block}.personal-form textarea{width:100%;resize:vertical;border:1px solid #cdd9ea;border-radius:9px;padding:10px}.personal-badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#e9e3fb;color:#59459a}.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}@media(max-width:768px){.upload-backdrop{align-items:flex-end}.upload-panel{width:100%;height:auto;max-height:86dvh;border-radius:20px 20px 0 0}}
+/* Drawers (contribution and personal Q&A): a loose sheet laid over the desk. */
+.upload-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(27, 42, 68, .32);
+  animation: fade-in var(--dur-base) var(--ease-out) both;
+}
+
+.upload-backdrop.is-closing { pointer-events: none; animation: fade-out var(--dur-base) var(--ease-exit) both; }
+
+.upload-panel {
+  width: min(100%, 460px);
+  height: 100%;
+  overflow: auto;
+  padding: 0 24px 28px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: -1px 0 0 var(--line-strong), -18px 0 40px -24px rgba(27, 42, 68, .45);
+  animation: drawer-in-side var(--dur-medium) var(--ease-out) both;
+}
+
+.upload-backdrop.is-closing .upload-panel { animation: drawer-out-side var(--dur-base) var(--ease-exit) both; }
+
+.upload-panel header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 -24px 6px;
+  padding: 18px 24px 16px;
+  background:
+    linear-gradient(var(--line-strong), var(--line-strong)) 0 100% / 100% 1px no-repeat,
+    repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 40px) 24px 100% / calc(100% - 48px) 6px no-repeat,
+    repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 8px) 24px 100% / calc(100% - 48px) 3px no-repeat,
+    var(--surface-muted);
+}
+
+.upload-panel h2 { margin: 0; font-size: 20px; }
+
+.upload-panel header button {
+  min-width: 40px;
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  background: transparent;
+  font-size: 26px;
+  line-height: 1;
+  transition: border-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+}
+
+.upload-panel header button:hover { border-color: var(--line-strong); color: var(--ink); }
+
+.upload-panel p { color: var(--ink-soft); line-height: 1.7; }
+
+.upload-panel input:not([type=checkbox]) {
+  width: 100%;
+  margin: 7px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  background: var(--surface);
+  transition: border-color var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out);
+}
+
+.upload-panel input:not([type=checkbox]):focus,
+.personal-form textarea:focus { border-color: var(--jade); box-shadow: 0 0 0 3px var(--jade-soft); outline: none; }
+
+.upload-panel input[type=checkbox] { width: 16px; height: 16px; flex: 0 0 auto; margin-top: 3px; accent-color: var(--jade); }
+
+.upload-panel label { display: flex; gap: 8px; margin: 14px 0; color: var(--ink-soft); font-size: 14px; line-height: 1.6; }
+
+.upload-panel > .button { width: 100%; margin-top: 4px; }
+
+/* Dropzone framed by registration corners, like a specimen slot. */
+.upload-dropzone {
+  width: 100%;
+  margin: 14px 0;
+  padding: 32px 14px;
+  border: 1px dashed var(--jade-line);
+  border-radius: var(--radius-md);
+  color: var(--jade-strong);
+  background:
+    linear-gradient(var(--jade), var(--jade)) 8px 8px / 12px 1px no-repeat,
+    linear-gradient(var(--jade), var(--jade)) 8px 8px / 1px 12px no-repeat,
+    linear-gradient(var(--jade), var(--jade)) calc(100% - 8px) calc(100% - 8px) / 12px 1px no-repeat,
+    linear-gradient(var(--jade), var(--jade)) calc(100% - 8px) calc(100% - 8px) / 1px 12px no-repeat,
+    var(--surface-muted);
+  transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
+}
+
+.upload-dropzone:hover { border-color: var(--jade); background-color: var(--jade-soft); }
+
+.upload-error, .upload-success { padding: 8px 12px; border-left: 2px solid currentColor; border-radius: var(--radius-xs); }
+
+.upload-error { color: var(--danger) !important; background: var(--danger-soft); }
+
+.upload-success { color: var(--jade-strong) !important; background: var(--jade-soft); }
+
+.personal-list { margin: 8px 0 16px; }
+
+.personal-entry {
+  margin: 10px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--brass-line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+}
+
+.personal-entry p { margin: 6px 0 10px; }
+
+.personal-entry button {
+  min-height: 32px;
+  margin-right: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  background: var(--surface);
+  font-size: 13px;
+}
+
+.personal-entry button:hover { border-color: var(--jade); color: var(--jade-strong); }
+
+.personal-form { padding-top: 14px; border-top: 1px dashed var(--line-strong); }
+
+.personal-form label { display: block; }
+
+.personal-form textarea {
+  width: 100%;
+  margin-top: 7px;
+  resize: vertical;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--ink);
+  transition: border-color var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out);
+}
+
+.personal-form .text-button { margin-left: 8px; }
+
+.personal-badge {
+  display: inline-block !important;
+  padding: 2px 8px;
+  border: 1px solid var(--brass-line);
+  border-radius: var(--radius-xs);
+  color: #7a5d2e !important;
+  background: var(--brass-soft);
+}
+
+.sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+
+@media (max-width: 768px) {
+  .upload-backdrop { align-items: flex-end; }
+  .upload-panel { width: 100%; height: auto; max-height: 86dvh; padding-bottom: max(24px, env(safe-area-inset-bottom)); border-radius: var(--radius-lg) var(--radius-lg) 0 0; animation-name: drawer-in-up; }
+  .upload-panel header { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  .upload-backdrop.is-closing .upload-panel { animation-name: drawer-out-up; }
+}

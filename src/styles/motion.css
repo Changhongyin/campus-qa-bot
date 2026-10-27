@@ -1,0 +1,60 @@
+/* Shared motion vocabulary. Every substantial movement uses one of these keyframes
+   together with the duration and easing tokens from tokens.css. */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
+
+/* A surface arriving: rises a few pixels and settles. */
+@keyframes surface-in {
+  from { opacity: 0; transform: translateY(10px) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+
+/* A surface receding into the page: scales back slightly and fades. */
+@keyframes surface-recede {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: scale(.965); visibility: hidden; }
+}
+
+/* A smaller element joining in sequence. */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Left-to-right fragment reveal on the landing page. */
+@keyframes fragment-in {
+  from { opacity: 0; transform: translate(-.35em, .3em); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Very small vertical drift for revealed landing fragments. */
+@keyframes fragment-drift {
+  from { transform: translateY(0); }
+  to { transform: translateY(-2.5px); }
+}
+
+/* Drawers: from the right on wide screens, from the bottom on narrow ones. */
+@keyframes drawer-in-side { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+
+@keyframes drawer-out-side { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(28px); } }
+
+@keyframes drawer-in-up { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: none; } }
+
+@keyframes drawer-out-up { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(32px); } }
+
+/* Line drawing for contour and reticle strokes. */
+@keyframes stroke-draw { from { stroke-dashoffset: var(--stroke-length, 1200); } to { stroke-dashoffset: 0; } }
+
+/* A one-time calibration turn for the reticle tick ring. */
+@keyframes calibrate { from { transform: rotate(-14deg); opacity: 0; } to { transform: none; opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0ms !important;
+  }
+}

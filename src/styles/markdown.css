@@ -1,15 +1,79 @@
 .message__content :is(h1,h2,h3,p,ul,ol,blockquote,pre,table) { margin: 0 0 10px; }
+.message__content :is(h1,h2,h3) { color: var(--ink); line-height: 1.4; }
+.message__content h1 { font-size: 1.25em; }
+.message__content h2 { font-size: 1.15em; }
+.message__content h3 { font-size: 1.05em; }
 .message__content :is(ul,ol) { padding-left: 22px; }
-.message__content a { color: #1f5fd6; }
-.message__content pre { overflow-x: auto; padding: 12px; border-radius: 10px; background: #152235; color: #eef5ff; }
+.message__content li + li { margin-top: 4px; }
+.message__content li::marker { color: var(--jade); }
+.message__content strong { color: var(--ink); }
+.message__content a { color: var(--jade-strong); text-decoration-color: var(--jade-line); text-underline-offset: 3px; }
+.message__content a:hover { text-decoration-color: currentColor; }
+.message__content blockquote { margin-left: 0; padding: 4px 12px; border-left: 2px solid var(--brass-line); color: var(--ink-muted); }
+.message__content pre { overflow-x: auto; padding: 14px; border-radius: var(--radius-md); background: var(--ink); color: #eef2f8; }
 .message__content code { overflow-wrap: anywhere; }
+.message__content :not(pre) > code { padding: 1px 5px; border-radius: var(--radius-xs); background: var(--paper); }
 .markdown-code { display: block; position: relative; }
-.markdown-code button { position: absolute; top: 6px; right: 6px; border: 0; border-radius: 6px; padding: 4px 7px; color: #fff; background: #38506f; }
+.markdown-code button { position: absolute; top: 6px; right: 6px; border: 1px solid rgba(255,255,255,.18); border-radius: var(--radius-xs); padding: 3px 8px; color: #eef2f8; background: rgba(255,255,255,.08); font-size: 12px; }
+.markdown-code button:hover { background: rgba(255,255,255,.16); }
 .message__content table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
-.message__content th, .message__content td { border: 1px solid #dbe5f2; padding: 6px; }
-.thought-trail, .sources { margin-top: 8px; font-size: 12px; }
-.thought-trail button, .sources button { border: 0; color: #49698f; background: transparent; text-align: left; }
-.thought-trail ol { padding-left: 20px; }
-.thought-trail small { margin-left: 6px; color: #7a889a; }
-.sources blockquote { margin: 6px 0; padding: 8px 10px; border-left: 3px solid #54a887; background: #f1faf5; }
+.message__content th, .message__content td { border: 1px solid var(--line-strong); padding: 6px 10px; }
+.message__content th { background: var(--surface-muted); color: var(--ink); }
+
+/* Thought trail and sources: an observation log beneath the answer. */
+.thought-trail, .sources { margin-top: 10px; font-size: 13px; }
+
+.thought-trail button, .sources button {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  padding: 2px 6px 2px 0;
+  color: var(--ink-muted);
+  background: transparent;
+  text-align: left;
+  transition: color var(--dur-short) var(--ease-out);
+}
+
+.thought-trail button:hover, .sources button:hover { color: var(--jade-strong); }
+
+/* Leading reticle mark for the trail, an index square for each source. */
+.thought-trail > button::before {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border: 1px solid var(--brass);
+  border-radius: 50%;
+  background: linear-gradient(var(--brass), var(--brass)) center / 1px 100% no-repeat, linear-gradient(var(--brass), var(--brass)) center / 100% 1px no-repeat;
+  content: "";
+}
+
+.sources > div > button::before { width: 6px; height: 6px; flex: 0 0 auto; border: 1px solid var(--jade); content: ""; }
+
+.thought-trail ol {
+  margin: 4px 0 0 4px;
+  padding: 0 0 0 18px;
+  border-left: 1px solid var(--line-strong);
+  color: var(--ink-soft);
+}
+
+.thought-trail li { padding: 2px 0; }
+.thought-trail li::marker { color: var(--brass); font-variant-numeric: tabular-nums; }
+.thought-trail small { display: inline; margin-left: 8px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+
+.sources { padding-top: 6px; border-top: 1px dashed var(--line); }
+
+.sources blockquote {
+  margin: 4px 0 8px;
+  padding: 10px 12px;
+  border-left: 2px solid var(--jade);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--ink-soft);
+  background: var(--jade-soft);
+  animation: rise-in var(--dur-short) var(--ease-out) both;
+}
+
+.sources blockquote strong { color: var(--ink); }
 .sources blockquote p { margin: 4px 0 0; white-space: pre-wrap; }

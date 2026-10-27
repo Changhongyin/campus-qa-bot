@@ -1,59 +1,167 @@
+/* Landing: the field notebook cover. */
 .landing {
   position: relative;
-  display: grid;
+  z-index: 1;
+  display: flex;
   min-height: 100dvh;
-  place-items: center;
-  padding: 32px 20px;
+  align-items: center;
+  padding: clamp(48px, 9vh, 96px) clamp(28px, 7vw, 112px);
   overflow: hidden;
-  background: linear-gradient(150deg, #e8f1ff 0%, #f6faff 42%, #e4f7ef 100%);
+  transform-origin: 50% 40%;
 }
+
+.app--landing .landing { animation: surface-in var(--dur-medium) var(--ease-out) backwards; }
 
 .landing__content {
   position: relative;
-  z-index: 1;
-  width: min(100%, 680px);
-  text-align: center;
+  width: min(100%, 640px);
+  text-align: left;
 }
 
+/* Masthead: seal plus a short calibrated scale. */
+.landing__masthead { display: flex; align-items: center; gap: 18px; }
+
 .brand-mark {
+  position: relative;
   display: inline-grid;
-  width: 58px;
-  height: 58px;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
   place-items: center;
-  border-radius: 18px;
-  color: #fff;
-  background: linear-gradient(135deg, #1f5fd6, #17a673);
-  box-shadow: 0 12px 30px rgba(31, 95, 214, .26);
+  border-radius: var(--radius-sm);
+  color: var(--paper);
+  background: var(--ink);
+  box-shadow: inset 0 0 0 3px var(--ink), inset 0 0 0 4px var(--brass-line);
   font-size: 27px;
   font-weight: 800;
 }
 
-.landing__eyebrow { margin: 28px 0 12px; color: #3073bd; font-size: 14px; font-weight: 700; }
+.landing__scale {
+  width: min(180px, 40vw);
+  height: 10px;
+  background:
+    linear-gradient(var(--ink-muted), var(--ink-muted)) 0 100% / 100% 1px no-repeat,
+    repeating-linear-gradient(90deg, var(--ink-muted) 0 1px, transparent 1px 40px) 0 100% / 100% 10px no-repeat,
+    repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 8px) 0 100% / 100% 5px no-repeat;
+  opacity: .7;
+}
 
-.landing h1 { max-width: 620px; margin: 0 auto; letter-spacing: -.04em; font-size: clamp(32px, 6vw, 58px); line-height: 1.18; }
+.landing__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 40px 0 14px;
+  color: var(--jade-strong);
+  font-size: 15px;
+  font-weight: 700;
+}
 
-.landing__description { margin: 20px 0 28px; color: #607087; font-size: 17px; }
+.landing__eyebrow::before { width: 24px; height: 1px; flex: 0 0 auto; background: var(--jade); content: ""; }
 
-.landing__chips { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 0; margin: 0 0 30px; list-style: none; }
+.landing h1 {
+  max-width: 13em;
+  margin: 0;
+  color: var(--ink);
+  letter-spacing: -.04em;
+  font-size: clamp(32px, 5.6vw, 56px);
+  line-height: 1.22;
+}
 
-.landing__chips li { padding: 7px 11px; border: 1px solid #dce6f6; border-radius: 999px; color: #46607e; background: rgba(255,255,255,.76); font-size: 13px; }
+.landing__description { max-width: 32em; margin: 22px 0 32px; color: var(--ink-soft); font-size: 17px; line-height: 1.7; }
 
-.landing__cta { min-width: 160px; }
+/* Capability highlights read as a measured specimen list rather than pills. */
+.landing__chips {
+  display: grid;
+  max-width: 420px;
+  margin: 0 0 36px;
+  padding: 0;
+  border-top: 1px solid var(--line-strong);
+  list-style: none;
+}
 
-.landing__upload { display: block; margin: 16px auto; border: 0; color: #3361a8; background: transparent; font-size: 14px; }
+.landing__chips li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 15px;
+}
 
-.landing__privacy { max-width: 450px; margin: 24px auto 0; color: #7a889a; font-size: 12px; line-height: 1.7; }
+.landing__chips li::before {
+  width: 18px;
+  height: 7px;
+  flex: 0 0 auto;
+  background:
+    linear-gradient(var(--brass), var(--brass)) 0 100% / 100% 1px no-repeat,
+    linear-gradient(var(--brass), var(--brass)) 0 0 / 1px 100% no-repeat,
+    linear-gradient(var(--brass), var(--brass)) 50% 100% / 1px 4px no-repeat,
+    linear-gradient(var(--brass), var(--brass)) 100% 0 / 1px 100% no-repeat;
+  content: "";
+}
 
-.landing__orb { position: absolute; width: 42vmax; aspect-ratio: 1; border-radius: 50%; filter: blur(12px); opacity: .3; animation: drift 14s ease-in-out infinite alternate; }
+.landing__actions { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 
-.landing__orb--one { top: -20vmax; left: -14vmax; background: #77a9f5; }
+.landing__cta { min-width: 168px; min-height: 50px; padding: 12px 26px; font-size: 16px; }
 
-.landing__orb--two { right: -18vmax; bottom: -22vmax; background: #5ed0a4; animation-delay: -13s; }
+.landing__upload {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  border-bottom: 1px solid var(--jade-line);
+  border-radius: 0;
+  color: var(--jade-strong);
+  background: transparent;
+  font-size: 15px;
+  transition: border-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+}
 
-.landing__grid { position: absolute; inset: 0; opacity: .22; background-image: linear-gradient(#a7bddc 1px, transparent 1px), linear-gradient(90deg, #a7bddc 1px, transparent 1px); background-size: 34px 34px; mask-image: linear-gradient(to bottom, transparent, #000 25%, transparent); }
+.landing__upload:not(:disabled):hover { border-bottom-color: var(--jade-strong); color: var(--ink); }
 
-@keyframes drift { to { transform: translate3d(14vmax, 9vmax, 0) scale(1.15); } }
+.landing__privacy {
+  max-width: 30em;
+  margin: 36px 0 0;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line-strong);
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+/* Fragment reveal: left to right, then an independent, very small drift. */
+.fragment { display: inline-block; white-space: pre-wrap; opacity: 0; }
+
+.reveal-item { opacity: 0; }
+
+.landing[data-intro="landing"] .fragment {
+  animation:
+    fragment-in var(--dur-long) var(--ease-out) calc(var(--i) * var(--stagger)) both,
+    fragment-drift var(--drift-period, 6s) var(--ease-drift) calc(var(--i) * var(--stagger) + var(--dur-long)) infinite alternate;
+}
+
+/* Masthead and buttons join the sequence but never drift, so hit areas stay still. */
+.landing[data-intro="landing"] .reveal-item {
+  animation: rise-in var(--dur-medium) var(--ease-out) calc(var(--i) * var(--stagger)) both;
+}
+
+/* Leaving for chat: the cover recedes in place while chat takes the same space. */
+.app--chat .landing {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  animation: surface-recede var(--dur-base) var(--ease-exit) both;
+}
+
+@media (max-width: 560px) {
+  .landing { align-items: flex-start; padding: 64px 20px 40px; }
+  .landing__eyebrow { margin-top: 32px; }
+  .landing__description { font-size: 16px; }
+  .landing__actions { gap: 14px; }
+  .landing__cta { width: 100%; }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .landing__orb { animation: none; }
+  .fragment, .reveal-item,
+  .landing[data-intro="landing"] :is(.fragment, .reveal-item) { opacity: 1; animation: none; }
 }

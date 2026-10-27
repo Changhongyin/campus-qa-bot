@@ -1,0 +1,63 @@
+/* First-visit opening sequence. Timings are driven by useIntroSequence. */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  pointer-events: none;
+}
+
+/* The only rule in the app that sets a font family: isolated to the English intro line. */
+.intro-line[lang="en"] {
+  max-width: 18ch;
+  margin: 0;
+  color: var(--ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+  font-size: clamp(30px, 5.4vw, 60px);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.18;
+  text-align: center;
+  text-wrap: balance;
+  opacity: 0;
+}
+
+.intro[data-phase="line"] .intro-line { animation: rise-in var(--dur-intro) var(--ease-out) both; }
+
+.intro[data-phase="line-out"] .intro-line { opacity: 1; animation: fade-out var(--dur-long) var(--ease-exit) both; }
+
+/* A measured rule beneath the line, drawn as it appears. */
+.intro-line::after {
+  display: block;
+  width: 96px;
+  height: 7px;
+  margin: 22px auto 0;
+  background:
+    linear-gradient(var(--brass), var(--brass)) 0 100% / 100% 1px no-repeat,
+    repeating-linear-gradient(90deg, var(--brass) 0 1px, transparent 1px 12px) 0 100% / 100% 7px no-repeat;
+  opacity: .7;
+  content: "";
+}
+
+.intro-skip {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  background: var(--surface-muted);
+  font-size: 14px;
+  pointer-events: auto;
+  transition: border-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+  animation: fade-in var(--dur-base) var(--ease-out) 400ms both;
+}
+
+.intro-skip:hover { border-color: var(--ink-soft); color: var(--ink); }
+
+/* Landing copy stays out of sight and out of the tab order until the intro ends. */
+.landing:not([data-intro="landing"]) .landing__content { visibility: hidden; }

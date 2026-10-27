@@ -1,0 +1,92 @@
+/* Shared backdrop: warm survey paper with measured details. Purely decorative. */
+.field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(rgba(27, 42, 68, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27, 42, 68, .035) 1px, transparent 1px);
+  background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  background-position: -1px -1px;
+  animation: fade-in var(--dur-intro) var(--ease-out) both;
+}
+
+/* Calibrated edge scales: a minor tick every 8px, a major one every 40px. */
+.field__scale { position: absolute; opacity: .55; }
+
+.field__scale--top {
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 12px;
+  background:
+    repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 40px) 0 0 / 100% 12px no-repeat,
+    repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 8px) 0 0 / 100% 6px no-repeat;
+}
+
+.field__scale--left {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 12px;
+  background:
+    repeating-linear-gradient(var(--line-strong) 0 1px, transparent 1px 40px) 0 0 / 12px 100% no-repeat,
+    repeating-linear-gradient(var(--line) 0 1px, transparent 1px 8px) 0 0 / 6px 100% no-repeat;
+}
+
+.field__art { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke-linecap: round; }
+
+.field__art * { vector-effect: non-scaling-stroke; }
+
+.field__contours path {
+  stroke: var(--jade);
+  stroke-width: 1;
+  opacity: .2;
+  stroke-dasharray: 1;
+  --stroke-length: 1;
+  animation: stroke-draw 2.4s var(--ease-in-out) both;
+}
+
+.field__contours path:nth-child(2) { animation-delay: 120ms; }
+.field__contours path:nth-child(3) { animation-delay: 240ms; }
+.field__contours path:nth-child(4) { animation-delay: 360ms; }
+.field__contours path:nth-child(n + 5) { stroke: var(--brass); opacity: .26; animation-delay: 480ms; }
+
+.field__marks path { stroke: var(--ink); stroke-width: 1; opacity: .22; }
+
+.field__reticle {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity var(--dur-long) var(--ease-out), transform var(--dur-long) var(--ease-out);
+}
+
+.field__lens { stroke: var(--ink); stroke-width: 1; opacity: .16; }
+
+.field__lens--inner { stroke: var(--jade); opacity: .28; stroke-dasharray: .012 .012; }
+
+.field__cross { stroke: var(--ink); stroke-width: 1; opacity: .14; }
+
+.field__ticks {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: calibrate 1.8s var(--ease-out) 200ms both;
+}
+
+.field__ticks line { stroke: var(--brass); stroke-width: 1; opacity: .4; }
+
+.field__ticks line.is-major { opacity: .75; }
+
+.field__pointer { fill: var(--jade); opacity: .55; stroke: none; }
+
+/* In chat the instrument steps back so the reading surface leads. */
+.app--chat .field__reticle { opacity: .45; transform: scale(.92); }
+
+@media (max-width: 720px) {
+  .field__reticle { opacity: .6; }
+  .field__scale { opacity: .4; }
+}

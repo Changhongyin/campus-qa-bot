@@ -2,6 +2,7 @@ import { copy } from '../copy';
 import type { Message } from '../types';
 import { FeedbackBar } from './FeedbackBar';
 import { MarkdownContent } from './MarkdownContent';
+import { MessageMark } from './MessageMark';
 import { SourceDetail } from './SourceDetail';
 import { ThoughtTrail } from './ThoughtTrail';
 
@@ -14,7 +15,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   return (
     <article className={`message message--${message.role}`} data-testid={testId}>
-      <span className="message__avatar" aria-hidden="true">{message.role === 'user' ? '我' : '量'}</span>
+      <MessageMark role={message.role} />
       <div className="message__content">
         {message.role === 'assistant' ? <MarkdownContent content={message.content} /> : <p>{message.content}</p>}
         {message.badge === 'personal' ? <small className="personal-badge">{copy.chat.personalMatch}</small> : null}

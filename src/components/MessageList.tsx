@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { copy } from '../copy';
 import type { ChatState } from '../types';
 import { MessageBubble } from './MessageBubble';
+import { MessageMark } from './MessageMark';
 
 interface MessageListProps {
   state: ChatState;
@@ -20,7 +21,7 @@ export function MessageList({ state, onRegenerate, onStop }: MessageListProps) {
     <div className="message-list" data-testid="chat-window" aria-live="polite">
       {state.messages.length === 0 ? (
         <article className="message message--assistant">
-          <span className="message__avatar" aria-hidden="true">量</span>
+          <MessageMark role="assistant" />
           <div className="message__content"><p>{copy.chat.welcome}</p><p>{copy.chat.welcomeDetail}</p></div>
         </article>
       ) : null}
@@ -28,8 +29,8 @@ export function MessageList({ state, onRegenerate, onStop }: MessageListProps) {
       {state.messages.map((message) => <MessageBubble key={message.id} message={message} />)}
 
       {state.isStreaming ? (
-        <article className="message message--assistant" data-testid="msg-assistant-streaming">
-          <span className="message__avatar" aria-hidden="true">量</span>
+        <article className="message message--assistant message--streaming" data-testid="msg-assistant-streaming">
+          <MessageMark role="assistant" />
           <div className="message__content">
             <p>{state.streamText || state.thoughtText || copy.chat.thinking}</p>
             {state.canStop ? <button className="text-button" data-testid="stop-btn" type="button" onClick={onStop}>{copy.chat.stop}</button> : null}

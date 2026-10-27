@@ -1,5 +1,6 @@
 import { ChangeEvent, DragEvent, useEffect, useRef, useState } from 'react';
 import { copy } from '../copy';
+import { usePresence } from '../hooks/usePresence';
 import { ApiError, submitUpload } from '../lib/api';
 
 interface UploadPanelProps {
@@ -35,8 +36,9 @@ export function UploadPanel({ open, onClose }: UploadPanelProps) {
   const [result, setResult] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const presence = usePresence(open);
   useEffect(() => { if (open) closeRef.current?.focus(); }, [open]);
-  if (!open) return null;
+  if (!presence.mounted) return null;
 
   const accept = async (candidate: File | undefined): Promise<void> => {
     setError(''); setResult('');
@@ -60,7 +62,7 @@ export function UploadPanel({ open, onClose }: UploadPanelProps) {
     } finally { setBusy(false); }
   };
 
-  return <div className="upload-backdrop" role="presentation" onMouseDown={onClose}>
+  return <div className={`upload-backdrop${presence.closing ? ' is-closing' : ''}`} role="presentation" onMouseDown={onClose}>
     <section className="upload-panel" role="dialog" aria-modal="true" aria-label={copy.chat.upload} onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => { if (event.key === 'Escape') onClose(); }}>
       <header><h2>{copy.chat.upload}</h2><button ref={closeRef} type="button" onClick={onClose} aria-label={copy.chat.back}>×</button></header>
       <p>资料将提交给维护者审核，审核通过后才可能进入校园知识库。</p>

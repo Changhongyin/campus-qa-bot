@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { copy } from '../copy';
+import { usePresence } from '../hooks/usePresence';
 import type { PersonalQaEntry } from '../lib/personalQa';
 
 interface PersonalQaPanelProps {
@@ -20,8 +21,11 @@ export function PersonalQaPanel({ open, entries, onClose, onSave, onRemove }: Pe
   const [editingId, setEditingId] = useState<string | null>(null);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const presence = usePresence(open);
 
-  if (!open) return null;
+  useEffect(() => { if (open) closeRef.current?.focus(); }, [open]);
+  if (!presence.mounted) return null;
 
   const beginEdit = (entry?: PersonalQaEntry): void => {
     setEditingId(entry?.id ?? null);
@@ -40,11 +44,11 @@ export function PersonalQaPanel({ open, entries, onClose, onSave, onRemove }: Pe
   };
 
   return (
-    <div className="upload-backdrop" role="presentation" onMouseDown={onClose}>
+    <div className={`upload-backdrop${presence.closing ? ' is-closing' : ''}`} role="presentation" onMouseDown={onClose}>
       <section className="upload-panel personal-panel" role="dialog" aria-modal="true" aria-label={copy.chat.personalTitle} onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => { if (event.key === 'Escape') onClose(); }}>
         <header>
           <h2>{copy.chat.personalTitle}</h2>
-          <button type="button" onClick={onClose} aria-label={copy.chat.back}>×</button>
+          <button ref={closeRef} type="button" onClick={onClose} aria-label={copy.chat.back}>×</button>
         </header>
         <p>{copy.chat.personalDescription}</p>
         <p>{copy.chat.personalPrivacy}</p>
