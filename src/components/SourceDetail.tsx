@@ -17,7 +17,7 @@ export function SourceDetail({ sources, snippets }: SourceDetailProps) {
         const snippet = snippets?.find((item) => item.source === source);
         return (
           <div key={source}>
-            <button type="button" onClick={() => setOpen(open === source ? null : source)}>{source}</button>
+            <button type="button" aria-expanded={snippet ? open === source : undefined} onClick={() => setOpen(open === source ? null : source)}>{source}</button>
             {open === source && snippet ? <blockquote><strong>{snippet.title}</strong><p>{snippet.text}</p></blockquote> : null}
           </div>
         );

@@ -5,15 +5,21 @@
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  background-color: var(--paper);
+  background: var(--paper);
+  animation: fade-in var(--dur-intro) var(--ease-out) both;
+}
+
+/* Survey grid: one quiet 96px grid, fading out behind the reading area. */
+.field::before {
+  position: absolute;
+  inset: 0;
   background-image:
     linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
-    linear-gradient(rgba(27, 42, 68, .035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(27, 42, 68, .035) 1px, transparent 1px);
-  background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 96px 96px;
   background-position: -1px -1px;
-  animation: fade-in var(--dur-intro) var(--ease-out) both;
+  mask-image: radial-gradient(ellipse 70% 65% at 35% 45%, rgba(0, 0, 0, .35), #000 85%);
+  content: "";
 }
 
 /* Calibrated edge scales: a minor tick every 8px, a major one every 40px. */

@@ -31,7 +31,7 @@
 /* Very small vertical drift for revealed landing fragments. */
 @keyframes fragment-drift {
   from { transform: translateY(0); }
-  to { transform: translateY(-2.5px); }
+  to { transform: translateY(-1.5px); }
 }
 
 /* Drawers: from the right on wide screens, from the bottom on narrow ones. */

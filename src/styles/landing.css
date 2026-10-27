@@ -5,17 +5,34 @@
   display: flex;
   min-height: 100dvh;
   align-items: center;
-  padding: clamp(48px, 9vh, 96px) clamp(28px, 7vw, 112px);
+  justify-content: center;
+  padding: clamp(48px, 9vh, 96px) clamp(28px, 6vw, 96px);
   overflow: hidden;
   transform-origin: 50% 40%;
 }
 
 .app--landing .landing { animation: surface-in var(--dur-medium) var(--ease-out) backwards; }
 
+/* Two columns on wide screens: the statement on the left, the capability sheet on the right.
+   DOM order stays statement → capabilities → actions for reading and tabbing. */
 .landing__content {
   position: relative;
-  width: min(100%, 640px);
+  display: grid;
+  width: min(100%, 1160px);
+  grid-template-columns: minmax(0, 1fr);
   text-align: left;
+}
+
+@media (min-width: 960px) {
+  .landing__content {
+    grid-template-columns: minmax(0, 600px) minmax(320px, 400px);
+    justify-content: space-between;
+    column-gap: clamp(48px, 7vw, 120px);
+  }
+
+  .landing__content > :not(.landing__sheet) { grid-column: 1; }
+
+  .landing__sheet { grid-column: 2; grid-row: 1 / span 6; align-self: center; margin: 0; }
 }
 
 /* Masthead: seal plus a short calibrated scale. */
@@ -36,8 +53,8 @@
   font-weight: 800;
 }
 
-.landing__scale {
-  width: min(180px, 40vw);
+.landing__scale, .landing__sheet-scale {
+  display: block;
   height: 10px;
   background:
     linear-gradient(var(--ink-muted), var(--ink-muted)) 0 100% / 100% 1px no-repeat,
@@ -45,6 +62,8 @@
     repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 8px) 0 100% / 100% 5px no-repeat;
   opacity: .7;
 }
+
+.landing__scale { width: min(180px, 40vw); }
 
 .landing__eyebrow {
   display: flex;
@@ -59,46 +78,73 @@
 .landing__eyebrow::before { width: 24px; height: 1px; flex: 0 0 auto; background: var(--jade); content: ""; }
 
 .landing h1 {
-  max-width: 13em;
+  max-width: 12em;
   margin: 0;
   color: var(--ink);
   letter-spacing: -.04em;
-  font-size: clamp(32px, 5.6vw, 56px);
+  font-size: clamp(32px, 4.6vw, 52px);
   line-height: 1.22;
 }
 
-.landing__description { max-width: 32em; margin: 22px 0 32px; color: var(--ink-soft); font-size: 17px; line-height: 1.7; }
+.landing__description { max-width: 32em; margin: 22px 0 36px; color: var(--ink-soft); font-size: 17px; line-height: 1.7; }
 
-/* Capability highlights read as a measured specimen list rather than pills. */
-.landing__chips {
-  display: grid;
-  max-width: 420px;
+/* Capability sheet: a loose observation card laid over the instrument dial. */
+.landing__sheet {
+  position: relative;
   margin: 0 0 36px;
-  padding: 0;
-  border-top: 1px solid var(--line-strong);
-  list-style: none;
+  padding: 22px 26px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xs);
+  background: rgba(255, 255, 255, .9);
+  box-shadow: var(--shadow-surface);
 }
+
+/* Registration corners just outside the sheet. */
+.landing__sheet::before {
+  position: absolute;
+  inset: -9px;
+  background:
+    linear-gradient(var(--brass), var(--brass)) 0 0 / 12px 1px no-repeat,
+    linear-gradient(var(--brass), var(--brass)) 0 0 / 1px 12px no-repeat,
+    linear-gradient(var(--brass), var(--brass)) 100% 0 / 12px 1px no-repeat,
+    linear-gradient(var(--brass), var(--brass)) 100% 0 / 1px 12px no-repeat,
+    linear-gradient(var(--brass), var(--brass)) 0 100% / 12px 1px no-repeat,
+    linear-gradient(var(--brass), var(--brass)) 0 100% / 1px 12px no-repeat,
+    linear-gradient(var(--brass), var(--brass)) 100% 100% / 12px 1px no-repeat,
+    linear-gradient(var(--brass), var(--brass)) 100% 100% / 1px 12px no-repeat;
+  opacity: .8;
+  pointer-events: none;
+  content: "";
+}
+
+.landing__sheet-scale { width: 100%; margin-bottom: 6px; opacity: .45; }
+
+.landing__chips { display: grid; margin: 0; padding: 0; list-style: none; }
 
 .landing__chips li {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--line);
-  color: var(--ink-soft);
-  font-size: 15px;
+  gap: 16px;
+  padding: 16px 0;
+  color: var(--ink);
+  font-size: 16px;
 }
 
-.landing__chips li::before {
-  width: 18px;
-  height: 7px;
+.landing__chips li + li { border-top: 1px dashed var(--line-strong); }
+
+.capability__glyph {
+  width: 40px;
+  height: 40px;
   flex: 0 0 auto;
-  background:
-    linear-gradient(var(--brass), var(--brass)) 0 100% / 100% 1px no-repeat,
-    linear-gradient(var(--brass), var(--brass)) 0 0 / 1px 100% no-repeat,
-    linear-gradient(var(--brass), var(--brass)) 50% 100% / 1px 4px no-repeat,
-    linear-gradient(var(--brass), var(--brass)) 100% 0 / 1px 100% no-repeat;
-  content: "";
+  padding: 7px;
+  border: 1px solid var(--jade-line);
+  border-radius: 50%;
+  fill: none;
+  stroke: var(--jade-strong);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  background: var(--jade-soft);
 }
 
 .landing__actions { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
@@ -119,6 +165,8 @@
 
 .landing__upload:not(:disabled):hover { border-bottom-color: var(--jade-strong); color: var(--ink); }
 
+.landing__upload:disabled { border-bottom-style: dashed; color: var(--ink-muted); opacity: .8; }
+
 .landing__privacy {
   max-width: 30em;
   margin: 36px 0 0;
@@ -129,7 +177,7 @@
   line-height: 1.75;
 }
 
-/* Fragment reveal: left to right, then an independent, very small drift. */
+/* Fragment reveal: left to right, then an independent, barely perceptible drift. */
 .fragment { display: inline-block; white-space: pre-wrap; opacity: 0; }
 
 .reveal-item { opacity: 0; }
@@ -137,10 +185,10 @@
 .landing[data-intro="landing"] .fragment {
   animation:
     fragment-in var(--dur-long) var(--ease-out) calc(var(--i) * var(--stagger)) both,
-    fragment-drift var(--drift-period, 6s) var(--ease-drift) calc(var(--i) * var(--stagger) + var(--dur-long)) infinite alternate;
+    fragment-drift var(--drift-period, 8s) var(--ease-drift) calc(var(--i) * var(--stagger) + var(--dur-long)) infinite alternate;
 }
 
-/* Masthead and buttons join the sequence but never drift, so hit areas stay still. */
+/* Masthead, sheet and buttons join the sequence but never drift, so hit areas stay still. */
 .landing[data-intro="landing"] .reveal-item {
   animation: rise-in var(--dur-medium) var(--ease-out) calc(var(--i) * var(--stagger)) both;
 }
@@ -153,10 +201,17 @@
   animation: surface-recede var(--dur-base) var(--ease-exit) both;
 }
 
+@media (max-width: 959px) {
+  .landing__sheet { max-width: 520px; }
+}
+
 @media (max-width: 560px) {
-  .landing { align-items: flex-start; padding: 64px 20px 40px; }
+  .landing { align-items: flex-start; padding: 56px 20px 40px; }
   .landing__eyebrow { margin-top: 32px; }
-  .landing__description { font-size: 16px; }
+  .landing__description { margin-bottom: 28px; font-size: 16px; }
+  .landing__sheet { margin: 0 0 32px; padding: 16px 18px 4px; }
+  .landing__chips li { gap: 12px; padding: 12px 0; font-size: 15px; }
+  .capability__glyph { width: 34px; height: 34px; padding: 5px; }
   .landing__actions { gap: 14px; }
   .landing__cta { width: 100%; }
 }

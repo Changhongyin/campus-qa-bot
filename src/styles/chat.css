@@ -80,6 +80,7 @@
   color: var(--ink);
   background: var(--surface);
   line-height: 1.45;
+  field-sizing: content;
   transition: border-color var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out);
 }
 
@@ -89,9 +90,28 @@
 
 .composer textarea:disabled { background: var(--surface-muted); }
 
-.composer .icon-button { border: 1px solid var(--line-strong); color: var(--jade-strong); font-size: 14px; }
 
-.composer__send { flex: 0 0 auto; min-height: 46px; padding-inline: 22px; }
+.composer__send { flex: 0 0 auto; align-self: flex-end; min-height: 46px; padding-inline: 22px; }
+
+.composer .icon-button { align-self: flex-end; min-width: 46px; min-height: 46px; border: 1px solid var(--line-strong); color: var(--jade-strong); font-size: 14px; }
+
+/* Empty conversation: the welcome sits centred like the first page of a notebook,
+   with the quick prompts directly beneath it. */
+.chat-shell__body--empty { justify-content: center; }
+
+.chat-shell__body--empty .message-list { flex: 0 1 auto; padding-bottom: 0; }
+
+.chat-shell__body--empty .message { flex-direction: column; align-items: center; gap: 18px; margin: 0; text-align: center; }
+
+.chat-shell__body--empty .message__avatar--seal { width: 72px; height: 72px; flex-basis: 72px; font-size: 26px; }
+
+.chat-shell__body--empty .message__avatar--seal .seal__ring { stroke-width: .8; }
+
+.chat-shell__body--empty .message--assistant .message__content { flex: 0 1 auto; max-width: 30em; padding: 0; border: 0; color: var(--ink-soft); }
+
+.chat-shell__body--empty .message__content p:first-child { margin-bottom: 6px; color: var(--ink); font-size: 22px; font-weight: 700; }
+
+.chat-shell__body--empty .quick-prompts { justify-content: center; margin-top: 28px; padding-top: 0; border-top: 0; }
 
 /* Reading column: messages stay within a comfortable measure on wide screens. */
 .message-list {
@@ -166,20 +186,26 @@
 @keyframes seal-sweep { from { transform: rotate(-18deg); } to { transform: rotate(18deg); } }
 
 .message__content {
+  min-width: 0;
   max-width: min(78%, 680px);
-  padding: 12px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs) var(--radius-lg) var(--radius-lg);
   color: var(--ink-soft);
-  background: var(--surface);
   line-height: 1.75;
   word-break: break-word;
 }
 
-.message--assistant .message__content { border-left: 2px solid var(--jade-line); }
+/* Assistant answers read as notebook entries: no bubble, a full reading measure
+   and a fine rule that ties the text to its seal. */
+.message--assistant .message__content {
+  flex: 1;
+  max-width: 720px;
+  padding: 6px 0 4px 18px;
+  border-left: 1px solid var(--line-strong);
+  color: var(--ink);
+}
 
 .message--user .message__content {
-  border-color: var(--brass-line);
+  padding: 10px 16px;
+  border: 1px solid var(--brass-line);
   border-radius: var(--radius-lg) var(--radius-xs) var(--radius-lg) var(--radius-lg);
   color: var(--ink);
   background: var(--brass-soft);
@@ -274,9 +300,29 @@
 @media (max-width: 720px) {
   .chat-header { flex-wrap: wrap; row-gap: 6px; }
   .chat-header__brand { flex-basis: calc(100% - 52px); }
-  .chat-header__actions { order: 3; width: 100%; flex-wrap: wrap; margin-left: -10px; }
-  .chat-header__actions .text-button { min-height: 36px; }
-  .chat-header__actions .text-button + .text-button::before { display: none; }
+  /* Actions become one scrollable strip; the faded edge shows there is more. */
+  .chat-header__actions {
+    order: 3;
+    width: calc(100% + 18px);
+    margin: 0 -18px 0 -10px;
+    padding-right: 28px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
+  }
+  .chat-header__actions::-webkit-scrollbar { display: none; }
+
+  /* During a conversation the prompts collapse into one scrollable strip to save reading space. */
+  .chat-shell__body:not(.chat-shell__body--empty) .quick-prompts {
+    flex-wrap: nowrap;
+    margin-right: -12px;
+    padding-right: 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+  }
+  .chat-shell__body:not(.chat-shell__body--empty) .quick-prompts button { flex: 0 0 auto; white-space: nowrap; }
+  .chat-header__actions .text-button { flex: 0 0 auto; min-height: 36px; white-space: nowrap; }
   .composer textarea::placeholder { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 

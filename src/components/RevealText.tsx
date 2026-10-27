@@ -46,7 +46,7 @@ export function RevealText({ text, order }: RevealTextProps) {
         {splitFragments(text).map((fragment, index) => {
           const i = order + index;
           // Each fragment drifts on its own period so the page never moves in unison.
-          const style = { '--i': i, '--drift-period': `${5.2 + ((i * 7) % 11) * 0.37}s` } as CSSProperties;
+          const style = { '--i': i, '--drift-period': `${7 + ((i * 7) % 11) * 0.4}s` } as CSSProperties;
           return <span className="fragment" key={`${i}-${fragment}`} style={style}>{fragment}</span>;
         })}
       </span>

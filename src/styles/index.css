@@ -56,6 +56,9 @@ button:disabled { cursor: not-allowed; opacity: .52; }
 
 .button--primary:not(:disabled):hover { background: #22355a; }
 
+/* Unavailable primary actions read as outlined, not as a greyed-out slab. */
+.button--primary:disabled { color: var(--ink-muted); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line-strong); opacity: 1; }
+
 .button--primary:not(:disabled):active {
   transform: translateY(1px) scale(.985);
   box-shadow: var(--shadow-press), 0 0 0 rgba(27, 42, 68, 0);
