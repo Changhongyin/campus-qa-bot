@@ -12,10 +12,10 @@
   position: relative;
   display: flex;
   width: min(100% - 48px, 1120px);
-  min-height: calc(100dvh - 48px);
-  max-height: calc(100dvh - 48px);
+  min-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  max-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   flex-direction: column;
-  margin: 24px auto;
+  margin: calc(24px + env(safe-area-inset-top)) auto calc(24px + env(safe-area-inset-bottom));
   overflow: hidden;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
@@ -303,10 +303,13 @@
   /* Actions become one scrollable strip; the faded edge shows there is more. */
   .chat-header__actions {
     order: 3;
-    width: calc(100% + 18px);
-    margin: 0 -18px 0 -10px;
-    padding-right: 28px;
+    width: calc(100% + 32px);
+    /* Inner padding keeps focus outlines inside the scroll box; scroll-padding keeps a
+       focused action clear of the faded edge. */
+    margin: -4px -18px -4px -14px;
+    padding: 4px 28px 4px 4px;
     overflow-x: auto;
+    scroll-padding-inline: 4px 44px;
     scrollbar-width: none;
     mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
   }
@@ -316,24 +319,39 @@
   .chat-shell__body:not(.chat-shell__body--empty) .quick-prompts {
     flex-wrap: nowrap;
     margin-right: -12px;
-    padding-right: 24px;
+    margin-left: 0;
+    padding: 12px 24px 4px 4px;
     overflow-x: auto;
+    scroll-padding-inline: 4px 40px;
     scrollbar-width: none;
     mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
   }
   .chat-shell__body:not(.chat-shell__body--empty) .quick-prompts button { flex: 0 0 auto; white-space: nowrap; }
   .chat-header__actions .text-button { flex: 0 0 auto; min-height: 36px; white-space: nowrap; }
+
+  /* While keyboard focus is inside a strip, drop the fade so no outline is dimmed. */
+  .chat-header__actions:focus-within,
+  .chat-shell__body:not(.chat-shell__body--empty) .quick-prompts:focus-within { mask-image: none; }
   .composer textarea::placeholder { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
 @media (max-width: 480px) {
   .chat-shell { width: 100%; min-height: 100dvh; max-height: none; height: 100dvh; margin: 0; border: 0; border-radius: 0; }
   .chat-header, .composer { padding-right: max(14px, env(safe-area-inset-right)); padding-left: max(14px, env(safe-area-inset-left)); }
+  .chat-header { padding-top: max(12px, env(safe-area-inset-top)); }
   .composer { padding-bottom: max(14px, env(safe-area-inset-bottom)); }
   .composer__send { padding-right: 14px; padding-left: 14px; }
   .chat-shell__body { padding: 14px 12px 10px; }
   .message { gap: 8px; }
   .message__content { max-width: 84%; padding: 10px 13px; }
+}
+
+/* Short viewports (e.g. an on-screen keyboard is open): give the reading area the room.
+   The quick prompts return as soon as the viewport is tall again. */
+@media (max-height: 480px) {
+  .chat-shell__body:not(.chat-shell__body--empty) .quick-prompts { display: none; }
+  .chat-header { padding-top: max(8px, env(safe-area-inset-top)); padding-bottom: 10px; }
+  .composer { padding-top: 10px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
 }
 
 @media (prefers-reduced-motion: reduce) {

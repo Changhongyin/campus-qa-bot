@@ -32,7 +32,7 @@
   align-items: center;
   justify-content: space-between;
   margin: 0 -24px 6px;
-  padding: 18px 24px 16px;
+  padding: max(18px, env(safe-area-inset-top)) 24px 16px;
   background:
     linear-gradient(var(--line-strong), var(--line-strong)) 0 100% / 100% 1px no-repeat,
     repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 40px) 24px 100% / calc(100% - 48px) 6px no-repeat,

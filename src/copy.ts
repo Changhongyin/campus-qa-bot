@@ -40,6 +40,7 @@ export const copy = {
     welcome: '你好，我是量大智答。',
     welcomeDetail: '我会尽量依据校园资料，为你寻找清晰、可靠的答案。',
     inputPlaceholder: '输入你的校园问题，按 Enter 发送',
+    inputPlaceholderShort: '输入你的校园问题',
     send: '发送',
     stop: '停止生成',
     regenerate: '重新生成',

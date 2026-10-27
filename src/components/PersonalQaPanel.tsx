@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { copy } from '../copy';
 import { usePresence } from '../hooks/usePresence';
+import { useReturnFocus } from '../hooks/useReturnFocus';
 import type { PersonalQaEntry } from '../lib/personalQa';
 
 interface PersonalQaPanelProps {
@@ -23,6 +24,7 @@ export function PersonalQaPanel({ open, entries, onClose, onSave, onRemove }: Pe
   const [answer, setAnswer] = useState('');
   const closeRef = useRef<HTMLButtonElement>(null);
   const presence = usePresence(open);
+  useReturnFocus(open);
 
   useEffect(() => { if (open) closeRef.current?.focus(); }, [open]);
   if (!presence.mounted) return null;

@@ -1,6 +1,7 @@
 import { ChangeEvent, DragEvent, useEffect, useRef, useState } from 'react';
 import { copy } from '../copy';
 import { usePresence } from '../hooks/usePresence';
+import { useReturnFocus } from '../hooks/useReturnFocus';
 import { ApiError, submitUpload } from '../lib/api';
 
 interface UploadPanelProps {
@@ -37,6 +38,7 @@ export function UploadPanel({ open, onClose }: UploadPanelProps) {
   const [busy, setBusy] = useState(false);
 
   const presence = usePresence(open);
+  useReturnFocus(open);
   useEffect(() => { if (open) closeRef.current?.focus(); }, [open]);
   if (!presence.mounted) return null;
 

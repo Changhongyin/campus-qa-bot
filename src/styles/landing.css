@@ -206,7 +206,7 @@
 }
 
 @media (max-width: 560px) {
-  .landing { align-items: flex-start; padding: 56px 20px 40px; }
+  .landing { align-items: flex-start; padding: max(56px, calc(env(safe-area-inset-top) + 24px)) max(20px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
   .landing__eyebrow { margin-top: 32px; }
   .landing__description { margin-bottom: 28px; font-size: 16px; }
   .landing__sheet { margin: 0 0 32px; padding: 16px 18px 4px; }

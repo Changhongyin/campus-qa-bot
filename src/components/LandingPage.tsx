@@ -72,9 +72,9 @@ export function LandingPage({
   return (
     <section className="landing" data-intro={intro.phase} aria-labelledby="landing-title">
       {intro.phase !== 'landing' ? (
-        <div className="intro" data-phase={intro.phase} onClick={intro.skip}>
+        <div className="intro" data-phase={intro.phase}>
           <p className="intro-line" lang="en">{INTRO_LINE}</p>
-          <button className="intro-skip" type="button" lang="en" onClick={intro.skip}>Skip intro</button>
+          <button className="intro-skip" type="button" lang="en" aria-keyshortcuts="Escape" onClick={intro.skip}>Skip intro</button>
         </div>
       ) : null}
       <div className="landing__content">
