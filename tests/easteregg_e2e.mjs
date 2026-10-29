@@ -48,6 +48,21 @@ await shot('1-receding');
 await page.waitForSelector('.egg-root[data-phase="playing"]', { timeout: 3000 });
 check('easter egg mounted after the recede', true);
 
+// Record playbackRate every frame and count seeks of the video during a normal run.
+await page.evaluate(() => {
+  const v = document.querySelector('.egg-root video');
+  const a = document.querySelector('.egg-root audio');
+  window.__eggRun = { rates: new Set(), frames: 0, seeks: 0, maxDrift: 0 };
+  v.addEventListener('seeking', () => { if (a.currentTime > 1) window.__eggRun.seeks += 1; });
+  const sample = () => {
+    const run = window.__eggRun;
+    run.rates.add(v.playbackRate);
+    run.frames += 1;
+    if (a.currentTime > 1) run.maxDrift = Math.max(run.maxDrift, Math.abs(v.currentTime - a.currentTime));
+    if (!run.stop) requestAnimationFrame(sample);
+  };
+  requestAnimationFrame(sample);
+});
 await page.waitForFunction(() => document.querySelector('.egg-root audio')?.currentTime > 3, null, { timeout: 15000 });
 const sync = await page.evaluate(() => {
   const v = document.querySelector('.egg-root video');
@@ -59,6 +74,15 @@ check('video is muted', sync.muted);
 check('video and audio share duration D', Math.abs(sync.vd - sync.ad) < 0.05, `video ${sync.vd} audio ${sync.ad}`);
 const devClock = await page.locator('.egg-dev-clock').textContent().catch(() => null);
 check('dev clock shows currentTime / duration (dev builds only)', devClock === null || /\d+\.\d\d \/ \d+\.\d\d/.test(devClock), devClock ?? 'production build');
+await page.waitForFunction(() => document.querySelector('.egg-root audio')?.currentTime > 12, null, { timeout: 20000 });
+const run = await page.evaluate(() => {
+  const r = window.__eggRun;
+  r.stop = true;
+  return { rates: [...r.rates], frames: r.frames, seeks: r.seeks, maxDrift: r.maxDrift };
+});
+check('playbackRate stays 1 on a normal run', run.rates.length === 1 && run.rates[0] === 1,
+  `${run.frames} frames, rates ${run.rates.join(',')}`);
+check('no corrective seeks on a normal run', run.seeks === 0, `${run.seeks} seeks, max drift ${run.maxDrift.toFixed(3)}s`);
 await shot('2-playing');
 
 // Jump the master clock to just before the reveal; the video must follow.

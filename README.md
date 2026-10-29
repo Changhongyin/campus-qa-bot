@@ -160,8 +160,10 @@ page recede (`scale(.92)`, `blur(8px)`, fade, 600ms, with landing text character
 sequence). Then the film and the anthem start together. Clicks more than 1.5s apart start the count
 again. `Esc` or **Close** leaves the egg and restores the landing page.
 
-**Clock.** The `<audio>` element is the master clock. Every animation frame the muted `<video>` is
-nudged or seeked to follow it, so `video.currentTime` stays within about 30ms of the anthem. When the
+**Clock.** The `<audio>` element is the master clock. The muted `<video>` plays at
+`playbackRate = 1` and is checked every animation frame: only when it is more than 0.5 s off the
+anthem (after a stall or a seek) is it put back with one seek, never while a seek is in flight.
+Smaller drift is left alone; nudging the rate every frame made the picture judder. When the
 film ends, the video holds its last frame and the final dynamic stage takes over: a survey grid
 drifting at `60s linear infinite`, a glow breathing at `8s ease-in-out infinite`, and the fine
 graduations of the film's ring turning slowly.
@@ -175,9 +177,20 @@ graduations of the film's ring turning slowly.
 | `public/media/easteregg.mp4` | H.264 fallback, same picture and duration, no audio track |
 | `public/media/easteregg-final.jpg` | The film's last frame, used as the final stage's base layer if the video cannot be decoded |
 
-The film is rendered by `scripts/easteregg/render_film.py` (numpy + skia-python + ffmpeg) straight from
-the anthem. Its sections are cut on times measured in the recording (`CUES` in the script), and the
-anthem's loudness drives the glow. Re-render with:
+**The film.** A campus anime short in the manner of Makoto Shinkai's films, painted entirely in code:
+noise-generated cumulus, golden-hour light, bloom and lens flares, and a cel-shaded student puppet
+(base, shade and rim light, wind in her hair and skirt). In order: the classroom window at golden
+hour (prelude); walking the Qiantang embankment at dusk under power lines (verse 1); running through
+falling cherry blossoms on campus (spring); the level crossing, the train passing to reveal her, and
+the sunset sky (祖国 / 力量); blue hour (interlude). Verse 2 tells the motto without words. 细量: on a
+rooftop she kneels at a theodolite, then a macro of a vernier scale sliding into agreement, then a star
+held in the crosshair. 精思国计: she sits above the city at night, the streets resolve into a survey
+grid, and she lifts a hand to the Milky Way. The star trails tighten into the graduated circle for
+"计量", and the dawn comes up behind her, small on the hill at the edge of the frame.
+
+It is rendered by `scripts/easteregg/render_film.py` (numpy + pillow + skia-python + ffmpeg) straight
+from the anthem. Its sections are cut on times measured in the recording (`CUES` in the script), and
+the anthem's loudness drives the light. Re-render with:
 
 ```bash
 python scripts/easteregg/render_film.py --audio public/media/anthem.mp3 --out-dir public/media

@@ -14,9 +14,11 @@ interface EasterEggProps {
 
 const media = (file: string): string => `${import.meta.env.BASE_URL}media/${file}`;
 
-/** Drift beyond this is corrected by seeking; below it, by nudging the playback rate. */
-const SEEK_DRIFT_S = 0.25;
-const NUDGE_DRIFT_S = 0.03;
+/**
+ * Only drift beyond this is corrected, by one seek. Smaller drift is left alone: it is
+ * imperceptible, and changing playbackRate every frame made the picture judder.
+ */
+const SEEK_DRIFT_S = 0.5;
 
 export function EasterEgg({ stage, onEnded, onClose }: EasterEggProps) {
   const { videoRef, audioRef } = useEggMedia();
@@ -31,6 +33,7 @@ export function EasterEgg({ stage, onEnded, onClose }: EasterEggProps) {
     const video = videoRef.current;
     if (!audio || !video) return;
     video.muted = true;
+    video.playbackRate = 1;
     audio.currentTime = 0;
     video.currentTime = 0;
     startedAudio.add(audio);
@@ -49,13 +52,7 @@ export function EasterEgg({ stage, onEnded, onClose }: EasterEggProps) {
         if (audio.paused || audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
           if (!video.paused) video.pause();
         } else if (!video.seeking) {
-          const drift = video.currentTime - audio.currentTime;
-          if (Math.abs(drift) > SEEK_DRIFT_S) {
-            video.currentTime = audio.currentTime;
-            video.playbackRate = 1;
-          } else {
-            video.playbackRate = Math.abs(drift) > NUDGE_DRIFT_S ? Math.min(1.1, Math.max(0.9, 1 - drift)) : 1;
-          }
+          if (Math.abs(video.currentTime - audio.currentTime) > SEEK_DRIFT_S) video.currentTime = audio.currentTime;
           if (video.paused) void video.play().catch(() => undefined);
         }
       }
