@@ -1,4 +1,4 @@
-/* Easter egg "The Standard": the masthead seal's hidden film and its final stage.
+/* Easter egg: the masthead seal's hidden entry point and the (for now empty) stage it opens.
    Every piece of text inside the egg uses one of the three font slots below and
    nothing else; the font engineer overrides them, no web fonts are loaded here. */
 :root {
@@ -6,11 +6,7 @@
   --egg-font-motto: Georgia, "Times New Roman", serif;   /* the university motto */
   --egg-font-ui: "Helvetica Neue", Arial, sans-serif;    /* buttons and small UI text */
 
-  /* The film's palette, so the DOM layers sit inside the picture. */
   --egg-night: #05070d;
-  --egg-brass: #e2b45c;
-  --egg-brass-faint: rgba(226, 180, 92, .1);
-  --egg-vermilion: #d9472b;
   --egg-paper: #f3ead8;
 
   --egg-recede: 600ms;
@@ -78,7 +74,7 @@
   to { opacity: 0; transform: translateY(-.3em); }
 }
 
-/* ---- The film -------------------------------------------------------------- */
+/* ---- The stage: an empty placeholder for the code-rendered form ------------ */
 .egg-root {
   position: fixed;
   inset: 0;
@@ -87,106 +83,19 @@
   color: var(--egg-paper);
   background: var(--egg-night);
   font-family: var(--egg-font-ui);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+  animation: fade-in 900ms var(--ease-out) both;
 }
 
-.egg-root:is([data-phase="playing"], [data-phase="final"]) {
-  visibility: visible;
-  pointer-events: auto;
-  animation: fade-in 900ms var(--ease-out) forwards;
-}
-
-/* --egg-frame-h is the on-screen height of the 1920x1080 picture, so DOM layers can line up with it. */
+/* --egg-frame-h: the height of a 16:9 frame covering the viewport, for sizing the reveal. */
 .egg-stage {
   --egg-frame-h: max(100dvh, 56.25vw);
   position: absolute;
   inset: 0;
-  background: var(--egg-night) center / cover no-repeat;
-}
-
-.egg-film {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  background: var(--egg-night);
 }
 
 @media (orientation: portrait) {
-  .egg-stage { --egg-frame-h: 56.25vw; background-size: contain; }
-  .egg-film { object-fit: contain; }
-}
-
-/* ---- Final dynamic stage: the held last frame, still alive ----------------- */
-/* The still is a fallback base layer for when the video could not be decoded. */
-.egg-root[data-phase="final"] .egg-stage { background-image: url("/media/easteregg-final.jpg"); }
-
-.egg-final {
-  --egg-cell: calc(var(--egg-frame-h) * .0889); /* the film's own 96px survey grid */
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 1.6s var(--ease-out);
-}
-
-.egg-root[data-phase="final"] .egg-final { opacity: 1; }
-
-/* A second survey grid, the film's grid size, drifting one cell a minute over the still one. */
-.egg-final__grid {
-  position: absolute;
-  inset: calc(var(--egg-cell) * -2);
-  background-image:
-    linear-gradient(var(--egg-brass-faint) 1px, transparent 1px),
-    linear-gradient(90deg, var(--egg-brass-faint) 1px, transparent 1px);
-  background-size: var(--egg-cell) var(--egg-cell);
-  -webkit-mask-image: radial-gradient(ellipse at center, transparent 0 16%, #000 42%, transparent 82%);
-  mask-image: radial-gradient(ellipse at center, transparent 0 16%, #000 42%, transparent 82%);
-  animation: egg-grid-drift 60s linear infinite;
-}
-
-@keyframes egg-grid-drift {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(var(--egg-cell), var(--egg-cell), 0); }
-}
-
-/* Fine graduations on the film's inner ring, turning very slowly. */
-.egg-final__ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: calc(var(--egg-frame-h) * .86);
-  height: calc(var(--egg-frame-h) * .86);
-  margin: calc(var(--egg-frame-h) * -.43) 0 0 calc(var(--egg-frame-h) * -.43);
-  border-radius: 50%;
-  background: repeating-conic-gradient(var(--egg-brass) 0 .3deg, transparent .3deg 3deg);
-  -webkit-mask-image: radial-gradient(circle, transparent 0 calc(50% - 9px), #000 calc(50% - 8px) calc(50% - 1px), transparent 50%);
-  mask-image: radial-gradient(circle, transparent 0 calc(50% - 9px), #000 calc(50% - 8px) calc(50% - 1px), transparent 50%);
-  opacity: .32;
-  animation: egg-ring-turn 240s linear infinite;
-}
-
-@keyframes egg-ring-turn { to { transform: rotate(360deg); } }
-
-/* The centre's warm glow, breathing. */
-.egg-final__glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: calc(var(--egg-frame-h) * .9);
-  height: calc(var(--egg-frame-h) * .9);
-  margin: calc(var(--egg-frame-h) * -.45) 0 0 calc(var(--egg-frame-h) * -.45);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(226, 180, 92, .2) 0%, rgba(217, 71, 43, .07) 38%, transparent 68%);
-  mix-blend-mode: screen;
-  animation: egg-glow-breathe 8s ease-in-out infinite;
-}
-
-@keyframes egg-glow-breathe {
-  0%, 100% { opacity: .5; transform: scale(.96); }
-  50% { opacity: 1; transform: scale(1.04); }
+  .egg-stage { --egg-frame-h: 56.25vw; }
 }
 
 /* ---- Handoff: the reveal container ------------------------------------------
@@ -241,7 +150,7 @@
 /* ---- UI -------------------------------------------------------------------- */
 .egg-ui { font-family: var(--egg-font-ui); }
 
-.egg-close, .egg-play {
+.egg-close {
   position: absolute;
   z-index: 3;
   min-height: 36px;
@@ -254,39 +163,10 @@
   font-weight: 400;
   letter-spacing: .16em;
   text-transform: uppercase;
-  transition: opacity var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
-}
-
-.egg-close {
   top: max(16px, env(safe-area-inset-top));
   right: max(16px, env(safe-area-inset-right));
   opacity: .45;
+  transition: opacity var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
 }
 
 .egg-close:is(:hover, :focus-visible) { opacity: 1; border-color: rgba(243, 234, 216, .6); }
-
-.egg-play {
-  bottom: max(48px, calc(env(safe-area-inset-bottom) + 24px));
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.egg-dev-clock {
-  position: absolute;
-  bottom: max(12px, env(safe-area-inset-bottom));
-  left: max(12px, env(safe-area-inset-left));
-  z-index: 3;
-  display: grid;
-  gap: 2px;
-  border-radius: 4px;
-  padding: 6px 8px;
-  color: #b8f0c4;
-  background: rgba(0, 0, 0, .6);
-  font-family: var(--egg-font-ui);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.35;
-  pointer-events: none;
-}
-
-.egg-dev-clock [data-past] { color: var(--egg-brass); }

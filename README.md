@@ -151,96 +151,29 @@ docs/API.md —— 后端接口契约 v2
 
 ## Easter Egg Integration
 
-A hidden film behind the landing page's masthead seal. Only `.landing__masthead .brand-mark`
+A hidden entry point behind the landing page's masthead seal. Only `.landing__masthead .brand-mark`
 opens it. The chat-header seal, the message avatars and the empty-state seal are not triggers.
 
 **Sequence.** Click 1 shakes the seal (±4px, 120ms). Click 2 shakes it harder (±10px, ±3deg,
-200ms) and mounts the media, hidden, so the film and the anthem start preloading. Click 3 makes the
-page recede (`scale(.92)`, `blur(8px)`, fade, 600ms, with landing text characters leaving in
-sequence). Then the film and the anthem start together. Clicks more than 1.5s apart start the count
-again. `Esc` or **Close** leaves the egg and restores the landing page.
+200ms) and arms the egg. Click 3 makes the page recede (`scale(.92)`, `blur(8px)`, fade, 600ms, with
+landing text characters leaving in sequence), then the stage opens. Clicks more than 1.5s apart
+start the count again. `Esc` or **Close** leaves the egg and restores the landing page.
 
-**Clock.** The `<audio>` element is the master clock. The muted `<video>` plays at
-`playbackRate = 1` and is checked every animation frame: only when it is more than 0.5 s off the
-anthem (after a stall or a seek) is it put back with one seek, never while a seek is in flight.
-Smaller drift is left alone; nudging the rate every frame made the picture judder. When the
-film ends, the video holds its last frame and the final dynamic stage takes over: a survey grid
-drifting at `60s linear infinite`, a glow breathing at `8s ease-in-out infinite`, and the fine
-graduations of the film's ring turning slowly.
+States (`src/easteregg/useEasterEgg.ts`): `idle → armed → receding → placeholder`.
 
-### Assets
-
-| File | Spec |
-|---|---|
-| `public/media/anthem.mp3` | The supplied 校歌 recording, stream copied without re-encoding (only metadata stripped and a Xing header added for exact duration), 128 kb/s, 44.1 kHz stereo, **172.70 s** |
-| `public/media/easteregg.webm` | VP9, 1920x1080, 30 fps, 5181 frames, **172.70 s**, no audio track, no text of any kind |
-| `public/media/easteregg.mp4` | H.264 fallback, same picture and duration, no audio track |
-| `public/media/easteregg-final.jpg` | The film's last frame, used as the final stage's base layer if the video cannot be decoded |
-
-**The film.** A campus anime short in the visual language of Makoto Shinkai's films, painted entirely
-in code. The places are the protagonist; one university student moves through them, mostly small
-against the vista, with close-ups of her profile, her eye, her steps and her hands. Everything is graded
-teal in the shadows and orange in the highlights, with bloom and lens flares.
-
-| Time (s) | Shot |
-|---|---|
-| 0–8.5 | Dawn, the empty classroom: blank blackboard, rows of desks, god rays through the windows, dust |
-| 8.5–14.5 | The corridor: light pools on the polished floor; she walks away into the bright end |
-| 14.5–21 | Her profile against the window sky; a blink; whiteout |
-| 21–31 | Vista: the river at golden hour, the sun bursting through cumulus, power lines; she is a speck on the embankment |
-| 31–36.5 | Close: her steps on the embankment path, long shadow, grass, petals |
-| 36.5–41.5 | The stairwell: a tall window, a shaft of light across the steps |
-| 41.5–49 | Cherry-blossom avenue between the teaching buildings, petals in the wind; she reaches up |
-| 49–55 | 细量: her hands steady a spirit level; the bubble comes to rest between the marks |
-| 55–58.5 | 细量: a vernier slides into agreement |
-| 58.5–61.5 | 细量: her eye at the eyepiece, the scale reflected in the iris |
-| 61.5–72 | The level crossing at sunset: signals, the train passes, and she is there on the far side |
-| 72–81.6 | 力量: a rooftop under a towering cumulonimbus, sun rays fanning out; she lifts a hand |
-| 81.6–92 | Above a sea of clouds at sunset, a tiny figure on a peak |
-| 92–102 | Rain on the street at dusk: a convenience store glows, the lights stretch across wet asphalt; she waits under her umbrella and crosses on green |
-| 102–112.5 | 精思国计: from the hill, the river winds through the city to the horizon as its lights come on |
-| 112.5–125 | A stone stairway up to a pavilion, lanterns and fireflies, the first stars |
-| 125–141 | 精思国计: night over the city, the streets resolving into a survey grid, the Milky Way; the star chart in her hands turns until it agrees with the sky |
-| 141–158.1 | The star trails tighten into the graduated circle |
-| 158.1–172.7 | 计量: the needle locks on 计, the ring opens on 量, dawn rises behind her on the hill; a calm centre for the CSS stage |
-
-It is rendered by `scripts/easteregg/render_film.py` (numpy + pillow + skia-python + ffmpeg) straight
-from the anthem. Its sections are cut on times measured in the recording (`CUES` in the script), and
-the anthem's loudness drives the light. Re-render with:
-
-```bash
-python scripts/easteregg/render_film.py --audio public/media/anthem.mp3 --out-dir public/media
-```
-
-### Timing: `D` and `REVEAL_AT_SECONDS`
-
-- **`D` = 172.70 s** (audio 172.6955 s, video 5181 frames at 30 fps = 172.700 s).
-- The anthem's last line is "…我的名字叫**计量**". Measured with speech recognition and the loudness
-  envelope: **计 from 158.10 s**, a breath, **量 from 162.05 s**, held, then released by **169.25 s**.
-  The recording ends with 3.4 s of silence.
-- The brief's default, `D - 4` = 168.70 s, would fall in the reverb tail after "量" has been sung.
-  So, as the brief allows, the window follows the measured span: **`REVEAL_AT_SECONDS = 158.1`**.
-  The film's closing movement is cut to the same marks: the needle sweeps on 计 and locks at
-  162.05 s, the ring opens across the frame on 量, and the needle clears the centre by about 166 s.
-- `src/easteregg/easteregg-cues.ts` also exports `CHARACTER_CUES_SECONDS` (`ji: 158.1`,
-  `liang: 162.05`), `SUNG_END_SECONDS` (169.25) and `FILM_DURATION_SECONDS` (172.7).
+**Stage.** For now the stage is an empty, dark placeholder (`.egg-stage`, `data-phase="placeholder"`)
+on which the code-rendered form will be built. It carries no media.
 
 ### Handoff for the font engineer
 
 - **Reveal container.** `<div className="egg-final-reveal" data-state="awaiting" />` sits centred in
-  `.egg-stage`, which becomes the final dynamic stage. It is mounted when playback starts, not when
-  the film ends, because the reveal cue (158.1 s) comes before `D`. It is empty; inject the characters.
-  Suggested markup: `<p class="egg-reveal-line"><span data-char>计</span><span data-char>量</span></p>`
-  and `<p class="egg-reveal-line" data-motto>…</p>`. Lines stack, character spans never wrap, and
-  sizes come from the on-screen picture height (`--egg-frame-h`), not from a typeface:
+  `.egg-stage`, empty; inject the characters. Suggested markup:
+  `<p class="egg-reveal-line"><span data-char>计</span><span data-char>量</span></p>` and
+  `<p class="egg-reveal-line" data-motto>…</p>`. Lines stack, character spans never wrap, and sizes
+  come from a 16:9 frame covering the viewport (`--egg-frame-h`), not from a typeface:
   `--egg-display-size` and `--egg-motto-size`.
-- **Clock.** `useVideoClock()` (in `src/easteregg/EggClock.tsx`) returns
-  `{ currentTime, duration, video }`, refreshed every animation frame. `useEggMedia()` gives the raw
-  `videoRef` and `audioRef`. Cue on `video.currentTime`, never on timers.
-- **Dev overlay.** In `vite` dev builds, the bottom-left corner shows
-  `video.currentTime / video.duration`, the audio time and drift, and whether the reveal cue has passed.
 - **Font slots.** Defined on `:root` in `src/styles/easteregg.css`, with Latin fallbacks only and no
   web fonts: `--egg-font-display` (计量), `--egg-font-motto` (motto), `--egg-font-ui` (buttons and
   small UI text). Nothing in the egg sets `font-family` any other way.
-- **Check.** `BASE_URL=http://localhost:5173 node tests/easteregg_e2e.mjs` runs the whole sequence in
+- **Check.** `BASE_URL=http://localhost:5173 node tests/easteregg_e2e.mjs` runs the trigger flow in
   Chromium and writes screenshots to `screenshots/easteregg-*.png`.

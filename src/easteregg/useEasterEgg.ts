@@ -1,38 +1,21 @@
-import { useCallback, useRef, useState, type AnimationEvent } from 'react';
-import type { EggMedia } from './EggClock';
+import { useCallback, useEffect, useRef, useState, type AnimationEvent } from 'react';
 
 /**
- * idle → (click 1: soft shake) → (click 2: hard shake) armed, media preloading
- * → (click 3) receding, the page recedes → playing → final, the dynamic stage.
+ * idle → (click 1: soft shake) → (click 2: hard shake) armed
+ * → (click 3) receding, the page recedes → placeholder, the empty stage.
  */
-export type EggStage = 'idle' | 'armed' | 'receding' | 'playing' | 'final';
+export type EggStage = 'idle' | 'armed' | 'receding' | 'placeholder';
 export type SealShake = 'soft' | 'hard' | null;
 
 /** Clicks further apart than this start the count again. */
 const CLICK_WINDOW_MS = 1500;
 
-/** Audio elements whose real playback has begun; the unlock below must not pause those. */
-export const startedAudio = new WeakSet<HTMLMediaElement>();
-
-/**
- * Play and pause the audio inside the third click, so the browser counts its
- * later, delayed start as user-initiated. The anthem opens with 0.6 s of
- * silence, so nothing is heard.
- */
-function unlockAudio(audio: HTMLAudioElement | null): void {
-  if (!audio) return;
-  void audio.play().then(() => {
-    if (startedAudio.has(audio)) return;
-    audio.pause();
-    audio.currentTime = 0;
-  }).catch(() => undefined);
-}
-
-export function useEasterEgg(media: EggMedia) {
+export function useEasterEgg() {
   const [stage, setStage] = useState<EggStage>('idle');
   const [shake, setShake] = useState<SealShake>(null);
   const clicks = useRef({ count: 0, last: 0 });
   const sealRef = useRef<HTMLButtonElement>(null);
+  const returnFocus = useRef(false);
 
   const onSealClick = useCallback((): void => {
     if (stage !== 'idle' && stage !== 'armed') return;
@@ -48,29 +31,29 @@ export function useEasterEgg(media: EggMedia) {
     } else {
       state.count = 0;
       setShake(null);
-      unlockAudio(media.audioRef.current);
       setStage('receding');
     }
-  }, [stage, media]);
+  }, [stage]);
 
   const onSealAnimationEnd = useCallback((): void => setShake(null), []);
 
-  /** Attach to the page root: mounts the film once the landing has receded. */
+  /** Attach to the page root: shows the stage once the landing has receded. */
   const onPageAnimationEnd = useCallback((event: AnimationEvent<HTMLElement>): void => {
-    if (event.animationName === 'egg-page-recede' && stage === 'receding') setStage('playing');
+    if (event.animationName === 'egg-page-recede' && stage === 'receding') setStage('placeholder');
   }, [stage]);
 
-  const onPlaybackEnded = useCallback((): void => {
-    setStage((current) => (current === 'playing' ? 'final' : current));
+  const close = useCallback((): void => {
+    clicks.current.count = 0;
+    returnFocus.current = true;
+    setStage('idle');
   }, []);
 
-  const close = useCallback((): void => {
-    media.audioRef.current?.pause();
-    media.videoRef.current?.pause();
-    clicks.current.count = 0;
-    setStage('idle');
+  // Back to the seal once the landing is visible again (it is hidden while receded, so focus would fail).
+  useEffect(() => {
+    if (stage !== 'idle' || !returnFocus.current) return;
+    returnFocus.current = false;
     sealRef.current?.focus({ preventScroll: true });
-  }, [media]);
+  }, [stage]);
 
-  return { stage, shake, sealRef, onSealClick, onSealAnimationEnd, onPageAnimationEnd, onPlaybackEnded, close };
+  return { stage, shake, sealRef, onSealClick, onSealAnimationEnd, onPageAnimationEnd, close };
 }

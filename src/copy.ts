@@ -108,7 +108,5 @@ export const copy = {
     dialog: '彩蛋：计量',
     close: 'Close',
     closeLabel: '关闭彩蛋（Esc）',
-    play: 'Play',
-    playLabel: '播放彩蛋',
   },
 } as const;
