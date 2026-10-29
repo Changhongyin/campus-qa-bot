@@ -56,18 +56,50 @@ async function traceIdle(page, ms = 4000) {
     'field-rock', 'field-sway', 'field-bubble'];
   const missing = expected.filter((n) => !field.includes(n));
   check('landing: backdrop is alive', missing.length === 0, `${field.length} loops${missing.length ? `, missing ${missing}` : ''}`);
-  const drift = await page.evaluate(() => document.getAnimations()
-    .filter((a) => a.animationName === 'fragment-drift')
-    .map((a) => ({ d: a.effect.getTiming().duration, sheet: !!a.effect.target.closest('.landing__sheet') })));
-  const durations = drift.map((x) => x.d);
-  check('landing: text floats on 5-6s waves', drift.length > 0 && durations.every((d) => d >= 5000 && d <= 6000),
-    `${drift.length} fragments, ${Math.min(...durations)}-${Math.max(...durations)}ms`);
-  check('landing: capability sheet text does not float', drift.every((x) => !x.sheet));
-  const amp = await page.evaluate(() => {
-    const sheet = [...document.styleSheets].flatMap((s) => [...s.cssRules]).find((r) => r.name === 'fragment-drift');
-    return [...sheet.cssRules].map((k) => k.style.transform).join(' ');
+  const wave = await page.evaluate(() => {
+    const anims = document.getAnimations().filter((a) => a.animationName === 'fragment-wave');
+    const timing = anims.map((a) => a.effect.getComputedTiming());
+    const sheet = anims.some((a) => a.effect.target.closest('.landing__sheet, .landing__masthead, .landing__actions'));
+    const rule = [...document.styleSheets].flatMap((s) => [...s.cssRules]).find((r) => r.name === 'fragment-wave');
+    const keys = [...new Set([...rule.cssRules].map((k) => k.style.transform))];
+    const frames = [...rule.cssRules].reduce((n, k) => n + k.keyText.split(',').length, 0);
+    // Freeze the headline's characters at one instant, read their offsets, then advance all of
+    // them by the same amount and read again: a travelling wave shifts by whole characters.
+    const head = anims.filter((a) => a.effect.target.closest('h1'));
+    const ty = () => head.map((a) => new DOMMatrix(getComputedStyle(a.effect.target).transform).m42);
+    head.forEach((a) => a.pause());
+    const t0 = ty();
+    const STEP = 160;
+    const SHIFT = 3;
+    head.forEach((a) => { a.currentTime += STEP * SHIFT; });
+    const t1 = ty();
+    head.forEach((a) => a.play());
+    const n = t0.length - SHIFT;
+    let err = 0;
+    for (let i = 0; i < n; i += 1) err = Math.max(err, Math.abs(t1[i] - t0[i + SHIFT]));
+    const adjacent = t0.slice(1).map((v, i) => Math.abs(v - t0[i]));
+    return {
+      count: anims.length, sheet, keys,
+      durations: [...new Set(timing.map((t) => t.duration))],
+      frames,
+      easing: [...new Set(anims.map((a) => getComputedStyle(a.effect.target).animationTimingFunction))],
+      delaysStep: head.slice(1).map((a, i) => Math.round(head[i].effect.getComputedTiming().delay - a.effect.getComputedTiming().delay)),
+      peak: Math.max(...t0.map(Math.abs)), err, maxAdj: Math.max(...adjacent), minAdj: Math.min(...adjacent), chars: t0.length,
+    };
   });
-  check('landing: float amplitude ±9px', amp.includes('-9px') && amp.includes('9px'), amp);
+  check('landing: every character floats', wave.count >= 40, `${wave.count} characters`);
+  // ten cycles per iteration: 21 keyframes alternating low/high, eased per segment
+  check('landing: one period for all, a 5s sine-like cycle',
+    wave.durations.length === 1 && wave.durations[0] / 10 === 5000 && wave.frames === 21 && wave.easing.join() === 'ease-in-out',
+    `${wave.durations[0] / 10} ms per cycle, ${wave.frames} keyframes, ${wave.easing}`);
+  check('landing: amplitude ±3.5px', wave.keys.join(' ') === 'translateY(-3.5px) translateY(3.5px)' && wave.peak <= 3.51,
+    `${wave.keys.join(' → ')}, headline peak now ${wave.peak.toFixed(2)}px`);
+  check('landing: neighbours are one fixed phase step apart', wave.delaysStep.every((d) => d === 160), `${wave.delaysStep.length + 1} headline characters, 160ms apart`);
+  check('landing: neighbours rise and fall together, not as a block', wave.minAdj > 0.01 && wave.maxAdj < 1,
+    `adjacent offsets differ by ${wave.minAdj.toFixed(2)}-${wave.maxAdj.toFixed(2)}px`);
+  check('landing: the wave travels through the line', wave.err < 0.05,
+    `after 480ms each character sits where the one 3 ahead was (max error ${wave.err.toFixed(3)}px)`);
+  check('landing: masthead, sheet and buttons do not float', !wave.sheet);
   const before = await hitAreas(page);
   const perf = await traceIdle(page);
   const after = await hitAreas(page);

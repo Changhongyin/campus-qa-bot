@@ -39,17 +39,22 @@ interface RevealTextProps {
  * receive the unbroken original text.
  */
 export function RevealText({ text, order }: RevealTextProps) {
+  let char = 0;
   return (
     <>
       <span className="sr-only">{text}</span>
       <span aria-hidden="true">
         {splitFragments(text).map((fragment, index) => {
           const i = order + index;
-          // Each fragment drifts on its own period so the page never moves in unison.
-          const style = { '--i': i, '--drift-period': `${5 + ((i * 7) % 11) * 0.1}s` } as CSSProperties;
-          // The reveal animates the fragment and the float animates its inner span, so each
-          // element has one transform animation and the float can run on the compositor.
-          return <span className="fragment" key={`${i}-${fragment}`} style={style}><span className="fragment__float">{fragment}</span></span>;
+          // The reveal animates the fragment; each character floats in its own span, one phase
+          // step after its neighbour, so a single wave travels through the line.
+          return (
+            <span className="fragment" key={`${i}-${fragment}`} style={{ '--i': i } as CSSProperties}>
+              {Array.from(fragment, (glyph, k) => (
+                <span className="fragment__float" key={k} style={{ '--c': char++ } as CSSProperties}>{glyph}</span>
+              ))}
+            </span>
+          );
         })}
       </span>
     </>

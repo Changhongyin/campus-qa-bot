@@ -28,12 +28,12 @@
   to { opacity: 1; transform: none; }
 }
 
-/* A gentle float for revealed landing fragments: a full wave that starts and ends at rest,
-   so it picks up seamlessly from the reveal. */
-@keyframes fragment-drift {
-  0%, 100% { transform: translateY(0); }
-  25% { transform: translateY(-9px); }
-  75% { transform: translateY(9px); }
+/* The landing's travelling text wave: ten 5s cycles per iteration. Each character starts at a
+   different phase, so iteration boundaries are staggered; packing ten cycles into one iteration
+   keeps those rare, which keeps the wave on the compositor. Eased per segment (sine-like). */
+@keyframes fragment-wave {
+  0%, 10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90%, 100% { transform: translateY(-3.5px); }
+  5%, 15%, 25%, 35%, 45%, 55%, 65%, 75%, 85%, 95% { transform: translateY(3.5px); }
 }
 
 /* Drawers: from the right on wide screens, from the bottom on narrow ones. */
