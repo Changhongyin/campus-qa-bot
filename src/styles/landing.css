@@ -179,16 +179,23 @@
   line-height: 1.75;
 }
 
-/* Fragment reveal: left to right, then an independent, barely perceptible drift. */
+/* Fragment reveal: left to right, then each fragment floats on its own gentle wave. */
 .fragment { display: inline-block; white-space: pre-wrap; opacity: 0; }
+
+.fragment__float { display: inline-block; }
 
 .reveal-item { opacity: 0; }
 
 .landing[data-intro="landing"] .fragment {
-  animation:
-    fragment-in var(--dur-long) var(--ease-out) calc(var(--i) * var(--stagger)) both,
-    fragment-drift var(--drift-period, 8s) var(--ease-drift) calc(var(--i) * var(--stagger) + var(--dur-long)) infinite alternate;
+  animation: fragment-in var(--dur-long) var(--ease-out) calc(var(--i) * var(--stagger)) both;
 }
+
+.landing[data-intro="landing"] .fragment__float {
+  animation: fragment-drift var(--drift-period, 5.5s) ease-in-out calc(var(--i) * var(--stagger) + var(--dur-long)) infinite;
+}
+
+/* The capability sheet's text reveals but does not float: the sheet stays still. */
+.landing[data-intro="landing"] .landing__sheet .fragment__float { animation: none; }
 
 /* Masthead, sheet and buttons join the sequence but never drift, so hit areas stay still. */
 .landing[data-intro="landing"] .reveal-item {
@@ -221,4 +228,5 @@
 @media (prefers-reduced-motion: reduce) {
   .fragment, .reveal-item,
   .landing[data-intro="landing"] :is(.fragment, .reveal-item) { opacity: 1; animation: none; }
+  .landing[data-intro="landing"] .fragment__float { animation: none; }
 }

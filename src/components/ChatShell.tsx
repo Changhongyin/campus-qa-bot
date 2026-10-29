@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import emblem from '../assets/cjlu-emblem.png';
 import { copy } from '../copy';
 import type { ChatState } from '../types';
 import type { PersonalQaEntry } from '../lib/personalQa';
@@ -32,6 +33,7 @@ interface ChatShellProps {
 export function ChatShell(props: ChatShellProps) {
   const ref = useRef<HTMLElement>(null);
   const active = props.state.view === 'chat';
+  const empty = props.state.messages.length === 0 && !props.state.isStreaming;
   useEffect(() => {
     if (!active) return;
     // Entering chat: focus the question input, falling back to the shell while it is disabled.
@@ -52,7 +54,7 @@ export function ChatShell(props: ChatShellProps) {
           <button className="text-button" data-testid="clear-chat" type="button" onClick={props.onClear}>{copy.chat.clear}</button>
         </div>
       </header>
-      <div className={`chat-shell__body${props.state.messages.length === 0 && !props.state.isStreaming ? ' chat-shell__body--empty' : ''}`}><MessageList state={props.state} onRegenerate={props.onRegenerate} onStop={props.onStop} /><QuickPrompts disabled={props.state.isStreaming} onSelect={props.onSend} /></div>
+      <div className={`chat-shell__body${empty ? ' chat-shell__body--empty' : ''}`}>{empty ? <img className="chat-emblem" src={emblem} alt="" aria-hidden="true" draggable={false} /> : null}<MessageList state={props.state} onRegenerate={props.onRegenerate} onStop={props.onStop} /><QuickPrompts disabled={props.state.isStreaming} onSelect={props.onSend} /></div>
       <Composer disabled={props.state.isStreaming} onSend={props.onSend} onTyping={props.onTyping} />
       <PersonalQaPanel open={props.personalOpen} entries={props.personalEntries} onClose={props.onClosePersonal} onSave={props.onSavePersonal} onRemove={props.onRemovePersonal} />
     </section>

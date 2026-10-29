@@ -97,7 +97,23 @@
 
 /* Empty conversation: the welcome sits centred like the first page of a notebook,
    with the quick prompts directly beneath it. */
-.chat-shell__body--empty { justify-content: center; }
+.chat-shell__body--empty { position: relative; justify-content: center; }
+
+/* The school emblem, faint and centred behind the welcome and the quick prompts. */
+.chat-emblem {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  width: min(420px, 70%, 70vh);
+  height: auto;
+  opacity: .06;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  user-select: none;
+}
+
+.chat-shell__body--empty > :not(.chat-emblem) { position: relative; z-index: 1; }
 
 .chat-shell__body--empty .message-list { flex: 0 1 auto; padding-bottom: 0; }
 

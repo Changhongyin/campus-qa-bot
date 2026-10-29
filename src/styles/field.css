@@ -1,4 +1,5 @@
-/* Shared backdrop: warm survey paper with measured details. Purely decorative. */
+/* Shared backdrop: warm survey paper with measured details. Purely decorative.
+   Everything here moves only by transform or opacity, slowly, so nothing repaints the page. */
 .field {
   position: fixed;
   inset: 0;
@@ -22,54 +23,105 @@
   content: "";
 }
 
-/* Calibrated edge scales: a minor tick every 8px, a major one every 40px. */
-.field__scale { position: absolute; opacity: .55; }
+/* Calibrated edge scales: a minor tick every 8px, a major one every 40px. Each is one major
+   division longer than its edge and slides by exactly that, so the loop is seamless. */
+.field__scale { position: absolute; opacity: .55; will-change: transform; }
 
 .field__scale--top {
   top: 0;
-  right: 0;
+  right: -40px;
   left: 0;
   height: 12px;
   background:
     repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 40px) 0 0 / 100% 12px no-repeat,
     repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 8px) 0 0 / 100% 6px no-repeat;
+  animation: field-scroll-x 40s linear infinite;
 }
 
 .field__scale--left {
   top: 0;
-  bottom: 0;
+  bottom: -40px;
   left: 0;
   width: 12px;
   background:
     repeating-linear-gradient(var(--line-strong) 0 1px, transparent 1px 40px) 0 0 / 12px 100% no-repeat,
     repeating-linear-gradient(var(--line) 0 1px, transparent 1px 8px) 0 0 / 6px 100% no-repeat;
+  animation: field-scroll-y 52s linear infinite;
 }
 
-.field__art { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke-linecap: round; }
+/* The school emblem, barely there behind the landing; the chat shows its own. */
+.field__emblem {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(72vh, 80vw);
+  height: auto;
+  opacity: .03;
+  transform: translate(-50%, -50%);
+  user-select: none;
+  transition: opacity var(--dur-long) var(--ease-out);
+}
 
-.field__art * { vector-effect: non-scaling-stroke; }
+.app--chat .field__emblem { opacity: 0; }
 
-.field__contours path {
+/* The stage maps a 1440x900 drawing onto the viewport the way `xMidYMid slice` would. */
+.field__stage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100vw, 160vh);
+  height: max(100vh, 62.5vw);
+  transform: translate(-50%, -50%);
+}
+
+.field__piece, .field__reticle { position: absolute; overflow: visible; }
+
+.field__piece { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+.field__piece *, .field__layer * { vector-effect: non-scaling-stroke; }
+
+/* Contours: drawn in once, then a slow survey/tide undulation, each on its own phase. */
+.field__contour {
+  will-change: transform;
+  animation: field-tide 24s var(--ease-drift) calc(var(--n) * -4s) infinite;
+}
+
+.field__contour path {
   stroke: var(--jade);
   stroke-width: 1;
   opacity: .2;
   stroke-dasharray: 1;
   --stroke-length: 1;
-  animation: stroke-draw 2.4s var(--ease-in-out) both;
+  animation: stroke-draw 2.4s var(--ease-in-out) calc(var(--n) * 120ms) both;
 }
 
-.field__contours path:nth-child(2) { animation-delay: 120ms; }
-.field__contours path:nth-child(3) { animation-delay: 240ms; }
-.field__contours path:nth-child(4) { animation-delay: 360ms; }
-.field__contours path:nth-child(n + 5) { stroke: var(--brass); opacity: .26; animation-delay: 480ms; }
+.field__contour path.is-loop { stroke: var(--brass); opacity: .26; animation-delay: 480ms; }
 
-.field__marks path { stroke: var(--ink); stroke-width: 1; opacity: .22; }
+.field__contour:nth-child(even) { animation-duration: 28s; animation-direction: reverse; }
 
+/* Survey control points: a soft pulse, never in step. */
+.field__mark {
+  opacity: .3;
+  will-change: opacity;
+  animation: field-pulse 8s ease-in-out calc(var(--n) * -2.1s) infinite;
+}
+
+.field__mark path { stroke: var(--ink-muted); stroke-width: 1; }
+
+/* Reticle: the outer box handles the chat step-back; the inner one drifts; the ticks turn. */
 .field__reticle {
-  transform-box: fill-box;
   transform-origin: center;
   transition: opacity var(--dur-long) var(--ease-out), transform var(--dur-long) var(--ease-out);
 }
+
+.field__reticle-drift {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+  animation: field-drift 21s var(--ease-drift) infinite alternate;
+}
+
+.field__layer { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke-linecap: round; }
 
 .field__lens { stroke: var(--ink); stroke-width: 1; opacity: .16; }
 
@@ -77,17 +129,88 @@
 
 .field__cross { stroke: var(--ink); stroke-width: 1; opacity: .14; }
 
-.field__ticks {
-  transform-box: fill-box;
-  transform-origin: center;
+.field__pointer { fill: var(--jade); opacity: .55; stroke: none; }
+
+/* The one-time calibration turn lives on a wrapper, so the slow turn is the only transform
+   animation on the ring and stays on the compositor. */
+.field__ticks-in {
+  position: absolute;
+  inset: 0;
   animation: calibrate 1.8s var(--ease-out) 200ms both;
+}
+
+.field__ticks {
+  transform-origin: center;
+  will-change: transform;
+  animation: field-turn 150s linear infinite;
 }
 
 .field__ticks line { stroke: var(--brass); stroke-width: 1; opacity: .4; }
 
 .field__ticks line.is-major { opacity: .75; }
 
-.field__pointer { fill: var(--jade); opacity: .55; stroke: none; }
+/* Faint instruments at the edges: caliper, balance, protractor, plumb line, level. */
+.field__tool { opacity: .11; }
+
+.field__tool path, .field__tool rect, .field__tool circle, .field__tool ellipse { stroke: var(--ink); stroke-width: 1; }
+
+.field__caliper { opacity: .12; }
+
+.field__balance {
+  transform-origin: 50% 21%;
+  will-change: transform;
+  animation: field-rock 14s var(--ease-drift) infinite alternate;
+}
+
+.field__plumb {
+  transform-origin: 50% 0;
+  will-change: transform;
+  animation: field-sway 11s var(--ease-drift) infinite alternate;
+}
+
+.field__bubble {
+  will-change: transform;
+  animation: field-bubble 7s var(--ease-drift) infinite alternate;
+}
+
+.field__bubble ellipse { stroke: var(--jade); }
+
+@keyframes field-scroll-x { to { transform: translateX(-40px); } }
+
+@keyframes field-scroll-y { to { transform: translateY(-40px); } }
+
+@keyframes field-tide {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(8px, -2px); }
+  75% { transform: translate(-8px, 2px); }
+}
+
+@keyframes field-pulse {
+  0%, 100% { opacity: .3; }
+  50% { opacity: .6; }
+}
+
+@keyframes field-drift {
+  from { transform: translate(-13px, 6px); }
+  to { transform: translate(13px, -6px); }
+}
+
+@keyframes field-turn { to { transform: rotate(360deg); } }
+
+@keyframes field-rock {
+  from { transform: rotate(-1.5deg); }
+  to { transform: rotate(1.5deg); }
+}
+
+@keyframes field-sway {
+  from { transform: rotate(-.8deg); }
+  to { transform: rotate(.8deg); }
+}
+
+@keyframes field-bubble {
+  from { transform: translateX(-2px); }
+  to { transform: translateX(2px); }
+}
 
 /* In chat the instrument steps back so the reading surface leads. */
 .app--chat .field__reticle { opacity: .45; transform: scale(.92); }
@@ -95,4 +218,12 @@
 @media (max-width: 720px) {
   .field__reticle { opacity: .6; }
   .field__scale { opacity: .4; }
+  .field__tool { opacity: .07; }
+}
+
+/* Reduced motion: the backdrop holds still, everything in its resting place. */
+@media (prefers-reduced-motion: reduce) {
+  .field__scale, .field__contour, .field__mark, .field__reticle-drift, .field__ticks-in, .field__ticks,
+  .field__balance, .field__plumb, .field__bubble { animation: none; }
+  .field__contour path { animation: none; }
 }
