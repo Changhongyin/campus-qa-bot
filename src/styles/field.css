@@ -39,7 +39,7 @@
 }
 
 .field__scale--left {
-  top: 0;
+  top: 18px; /* starts below the top scale, so the two never cross */
   bottom: -40px;
   left: 0;
   width: 12px;
@@ -48,21 +48,6 @@
     repeating-linear-gradient(var(--line) 0 1px, transparent 1px 8px) 0 0 / 6px 100% no-repeat;
   animation: field-scroll-y 52s linear infinite;
 }
-
-/* The school emblem, barely there behind the landing; the chat shows its own. */
-.field__emblem {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: min(72vh, 80vw);
-  height: auto;
-  opacity: .03;
-  transform: translate(-50%, -50%);
-  user-select: none;
-  transition: opacity var(--dur-long) var(--ease-out);
-}
-
-.app--chat .field__emblem { opacity: 0; }
 
 /* The stage maps a 1440x900 drawing onto the viewport the way `xMidYMid slice` would. */
 .field__stage {
@@ -80,8 +65,12 @@
 
 .field__piece *, .field__layer * { vector-effect: non-scaling-stroke; }
 
-/* Contours: drawn in once, then a slow survey/tide undulation, each on its own phase. */
+/* Contours: drawn in once, then a slow survey/tide undulation, each on its own phase.
+   They fade out upward (toward the text) and at their right end (toward the level). */
 .field__contour {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 40%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 40%), linear-gradient(to right, #000 72%, transparent 100%);
+  mask-composite: intersect;
   will-change: transform;
   animation: field-tide 24s var(--ease-drift) calc(var(--n) * -4s) infinite;
 }
@@ -94,8 +83,6 @@
   --stroke-length: 1;
   animation: stroke-draw 2.4s var(--ease-in-out) calc(var(--n) * 120ms) both;
 }
-
-.field__contour path.is-loop { stroke: var(--brass); opacity: .26; animation-delay: 480ms; }
 
 .field__contour:nth-child(even) { animation-duration: 28s; animation-direction: reverse; }
 
@@ -110,6 +97,9 @@
 
 /* Reticle: the outer box handles the chat step-back; the inner one drifts; the ticks turn. */
 .field__reticle {
+  /* softened along the top, where it faces the capability sheet */
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, .35) 0, #000 32%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, .35) 0, #000 32%);
   transform-origin: center;
   transition: opacity var(--dur-long) var(--ease-out), transform var(--dur-long) var(--ease-out);
 }
@@ -157,7 +147,7 @@
 .field__caliper { opacity: .12; }
 
 .field__balance {
-  transform-origin: 50% 21%;
+  transform-origin: 50% 25.7%; /* the pivot at (860, 60) in its 760,24 200x140 box */
   will-change: transform;
   animation: field-rock 14s var(--ease-drift) infinite alternate;
 }

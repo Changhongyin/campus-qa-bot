@@ -99,14 +99,19 @@
    with the quick prompts directly beneath it. */
 .chat-shell__body--empty { position: relative; justify-content: center; }
 
-/* The school emblem, faint and centred behind the welcome and the quick prompts. */
+/* The school emblem, faint and centred behind the welcome and the quick prompts; sized from the
+   panel's height so the greeting sits inside its open centre (the grey ring, 0.36 of its
+   diameter), clear of the ring lettering. */
 .chat-emblem {
   position: absolute;
   top: 50%;
   left: 50%;
   z-index: 0;
-  width: min(420px, 70%, 70vh);
-  height: auto;
+  width: auto;
+  max-width: 92%;
+  height: min(660px, 100%);
+  aspect-ratio: 1;
+  object-fit: contain;
   opacity: .06;
   transform: translate(-50%, -50%);
   pointer-events: none;

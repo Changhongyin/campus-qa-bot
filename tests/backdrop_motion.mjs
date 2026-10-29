@@ -77,8 +77,7 @@ async function traceIdle(page, ms = 4000) {
   check('landing: animations composite, no paint storm', perf.paint === 0, `${perf.paint} paints`);
   // Composited animations still get an occasional, cheap style sync from Chrome; it must stay negligible.
   check('landing: main-thread style work under 2%', perf.styleMs < perf.ms * 0.02, `${perf.styleMs.toFixed(1)} ms of ${perf.ms} ms`);
-  const emblem = await page.evaluate(() => getComputedStyle(document.querySelector('.field__emblem')).opacity);
-  check('landing: emblem at most 0.03', Number(emblem) <= 0.03, `opacity ${emblem}`);
+  check('landing: no emblem behind the reading column', (await page.locator('.field__emblem').count()) === 0);
   const tools = await page.evaluate(() => [...document.querySelectorAll('.field__tool')]
     .map((el) => Number(getComputedStyle(el).opacity)));
   check('landing: instruments faint (≤ 0.12)', tools.length === 7 && tools.every((o) => o <= 0.12), tools.join(','));
@@ -120,6 +119,92 @@ async function traceIdle(page, ms = 4000) {
   // Composited animations still get an occasional, cheap style sync from Chrome; it must stay negligible.
   check('chat: main-thread style work under 2%', cPerf.styleMs < cPerf.ms * 0.02, `${cPerf.styleMs.toFixed(1)} ms of ${cPerf.ms} ms`);
   await page.screenshot({ path: 'screenshots/backdrop-chat.png' });
+  await context.close();
+}
+
+// ---- zones: no decoration overlaps another, the edge scales, or the content
+/**
+ * Drawn extent of each motif (union of its shapes' boxes), padded by how far it moves, and the
+ * boxes of the content it must keep clear of.
+ */
+const zoneRects = (page) => page.evaluate(() => {
+  // measure every motif at rest, then pad it by how far it moves, so the pad covers its whole sweep
+  const still = document.createElement('style');
+  still.textContent = '.field, .field * { animation: none !important; transition: none !important; }';
+  document.head.append(still);
+  // drift amplitude; the scales only slide along their own edge; everything else moves by ≤ 3px
+  const PAD = { reticle: 14, contours: 9, 'scale-top': 0, 'scale-left': 0 };
+  const union = (rects) => rects.reduce((u, r) => ({
+    l: Math.min(u.l, r.left), t: Math.min(u.t, r.top), r: Math.max(u.r, r.right), b: Math.max(u.b, r.bottom),
+  }), { l: Infinity, t: Infinity, r: -Infinity, b: -Infinity });
+  const clip = (u) => ({ l: Math.max(u.l, 0), t: Math.max(u.t, 0), r: Math.min(u.r, innerWidth), b: Math.min(u.b, innerHeight) });
+  const motifs = {};
+  for (const el of document.querySelectorAll('[data-motif]')) {
+    const name = el.dataset.motif;
+    const shapes = el.matches('svg, div') ? [...el.querySelectorAll('path, circle, rect, ellipse, line')] : [el];
+    motifs[name] = [...(motifs[name] ?? []), ...shapes.map((sh) => sh.getBoundingClientRect())];
+  }
+  const out = {};
+  for (const [name, rects] of Object.entries(motifs)) {
+    const u = union(rects);
+    const pad = PAD[name] ?? 3;
+    out[name] = clip({ l: u.l - pad, t: u.t - pad, r: u.r + pad, b: u.b + pad });
+  }
+  const content = {};
+  const pick = { masthead: '.landing__masthead', eyebrow: '.landing__eyebrow', headline: '.landing h1',
+    description: '.landing__description', actions: '.landing__actions', privacy: '.landing__privacy', sheet: '.landing__sheet' };
+  for (const [name, sel] of Object.entries(pick)) {
+    const el = document.querySelector(sel);
+    if (!el) continue;
+    const r = el.getBoundingClientRect();
+    const grow = name === 'sheet' ? 10 : 0; // its corner brackets sit just outside
+    content[name] = { l: r.left - grow, t: r.top - grow, r: r.right + grow, b: r.bottom + grow };
+  }
+  still.remove();
+  return { motifs: out, content };
+});
+
+const hit = (a, b, gap) => a.l < b.r + gap && b.l < a.r + gap && a.t < b.b + gap && b.t < a.b + gap;
+
+for (const [w, h] of [[1440, 900], [1280, 800]]) {
+  const { context, page } = await open({ viewport: { width: w, height: h } });
+  const { motifs, content } = await zoneRects(page);
+  const names = Object.keys(motifs).filter((n) => motifs[n].r > motifs[n].l && motifs[n].b > motifs[n].t);
+  const pairs = [];
+  for (let i = 0; i < names.length; i += 1) {
+    for (let j = i + 1; j < names.length; j += 1) {
+      if (hit(motifs[names[i]], motifs[names[j]], 4)) pairs.push(`${names[i]}×${names[j]}`);
+    }
+  }
+  check(`${w}x${h}: no two motifs overlap`, pairs.length === 0, pairs.join(', ') || `${names.length} motifs, all disjoint`);
+  const onContent = [];
+  for (const m of names) {
+    for (const [c, rect] of Object.entries(content)) if (hit(motifs[m], rect, 8)) onContent.push(`${m}×${c}`);
+  }
+  check(`${w}x${h}: reading area clear of motifs`, onContent.length === 0, onContent.join(', ') || 'clear');
+  await page.waitForTimeout(3000); // lifting the hold restarts the backdrop's fade-in and draw-in
+  await page.screenshot({ path: `screenshots/backdrop-landing-${w}x${h}.png` });
+
+  await page.getByTestId('landing-cta').click();
+  await page.waitForTimeout(1500);
+  const clear = await page.evaluate(() => {
+    const img = document.querySelector('.chat-shell__body--empty .chat-emblem');
+    const e = img.getBoundingClientRect();
+    const cx = e.left + e.width / 2;
+    const cy = e.top + e.height / 2;
+    const inner = e.width * 0.36; // radius of the emblem's open centre: the grey ring's inner edge
+    const text = [...document.querySelectorAll('.chat-shell__body--empty .message__content p')].map((p) => {
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      return range.getBoundingClientRect();
+    });
+    const far = Math.max(...text.flatMap((r) => [[r.left, r.top], [r.right, r.top], [r.left, r.bottom], [r.right, r.bottom]]
+      .map(([x, y]) => Math.hypot(x - cx, y - cy))));
+    return { size: e.width, inner, far };
+  });
+  check(`${w}x${h}: greeting sits inside the emblem's open centre`, clear.far < clear.inner,
+    `emblem ${clear.size.toFixed(0)}px, text reaches ${clear.far.toFixed(0)}px of ${clear.inner.toFixed(0)}px`);
+  await page.screenshot({ path: `screenshots/backdrop-chat-${w}x${h}.png` });
   await context.close();
 }
 
