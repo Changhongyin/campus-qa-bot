@@ -179,16 +179,28 @@
   line-height: 1.75;
 }
 
-/* Fragment reveal: left to right, then an independent, barely perceptible drift. */
+/* Fragment reveal: left to right; meanwhile a gentle wave travels through the characters. */
 .fragment { display: inline-block; white-space: pre-wrap; opacity: 0; }
+
+.fragment__float { display: inline-block; }
+
+/* The wave: ±3.5px, a 5s cycle, each character 160ms ahead of the one before. */
+.landing { --wave-cycle: 5s; --wave-step: 160ms; }
 
 .reveal-item { opacity: 0; }
 
 .landing[data-intro="landing"] .fragment {
-  animation:
-    fragment-in var(--dur-long) var(--ease-out) calc(var(--i) * var(--stagger)) both,
-    fragment-drift var(--drift-period, 8s) var(--ease-drift) calc(var(--i) * var(--stagger) + var(--dur-long)) infinite alternate;
+  animation: fragment-in var(--dur-long) var(--ease-out) calc(var(--i) * var(--stagger)) both;
 }
+
+/* One amplitude and one period for every character; each is a fixed phase step behind the one
+   before it (negative delays, so the wave is already moving when the page appears). */
+.landing[data-intro="landing"] .fragment__float {
+  animation: fragment-wave calc(var(--wave-cycle) * 10) ease-in-out calc(var(--c) * var(--wave-step) * -1) infinite;
+}
+
+/* The capability sheet's text reveals but does not float: the sheet stays still. */
+.landing[data-intro="landing"] .landing__sheet .fragment__float { animation: none; }
 
 /* Masthead, sheet and buttons join the sequence but never drift, so hit areas stay still. */
 .landing[data-intro="landing"] .reveal-item {
@@ -221,4 +233,5 @@
 @media (prefers-reduced-motion: reduce) {
   .fragment, .reveal-item,
   .landing[data-intro="landing"] :is(.fragment, .reveal-item) { opacity: 1; animation: none; }
+  .landing[data-intro="landing"] .fragment__float { animation: none; }
 }
