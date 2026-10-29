@@ -1,0 +1,136 @@
+/* Easter egg: the calibration bench. The entry has no affordance; the seal looks unchanged. */
+.seal-trigger { user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+
+.seal-trigger[data-shake="1"] { animation: seal-shake-soft 360ms var(--ease-out); }
+
+.seal-trigger[data-shake="2"] { animation: seal-shake-hard 460ms var(--ease-out); }
+
+.landing[data-shake="2"] .landing__content { animation: page-jolt 420ms var(--ease-out); }
+
+@keyframes seal-shake-soft {
+  25% { transform: translateX(-1.5px) rotate(-2deg); }
+  60% { transform: translateX(1.5px) rotate(1.5deg); }
+}
+
+@keyframes seal-shake-hard {
+  15% { transform: translateX(-4px) rotate(-6deg) scale(1.04); }
+  35% { transform: translateX(4px) rotate(5deg) scale(1.04); }
+  55% { transform: translateX(-3px) rotate(-3deg); }
+  75% { transform: translateX(2px) rotate(1deg); }
+}
+
+@keyframes page-jolt {
+  20% { transform: translate(1px, -1px); }
+  45% { transform: translate(-1px, 1px); }
+  70% { transform: translate(.5px, 0); }
+}
+
+/* Third click: the canvas takes over drawing every character in the same frame,
+   so the text itself goes transparent while the boxes recede behind it. */
+.landing[data-egg] .landing__content,
+.landing[data-egg] .landing__content * { color: transparent !important; }
+
+.landing[data-egg] :is(.brand-mark, .landing__scale) { visibility: hidden; }
+
+.landing[data-egg] :is(.landing__eyebrow, .landing__sheet, .landing__actions > *, .landing__privacy) {
+  animation: egg-recede 1.3s var(--ease-exit) var(--egg-delay, 0s) both;
+}
+
+.landing[data-egg] .landing__eyebrow { --egg-delay: .1s; }
+.landing[data-egg] .landing__sheet { --egg-delay: .9s; }
+.landing[data-egg] .landing__actions > :first-child { --egg-delay: 1.5s; }
+.landing[data-egg] .landing__actions > :last-child { --egg-delay: 1.65s; }
+.landing[data-egg] .landing__privacy { --egg-delay: 1.9s; }
+
+@keyframes egg-recede {
+  from { opacity: 1; transform: none; filter: blur(0); }
+  to { opacity: 0; transform: translateY(-4px) scale(.88); filter: blur(3px); visibility: hidden; }
+}
+
+/* The overlay starts transparent: the page and its backdrop stay exactly as they were,
+   then a paper veil settles over the backdrop so the bench reads clearly. */
+.egg {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+  outline: none;
+  touch-action: none;
+  overscroll-behavior: contain;
+  background: rgba(246, 243, 235, 0);
+  animation: egg-veil 2.6s var(--ease-in-out) .5s forwards;
+  transition: opacity 500ms var(--ease-exit);
+}
+
+.egg[data-leaving] { opacity: 0; pointer-events: none; }
+
+@keyframes egg-veil { to { background: rgba(246, 243, 235, .66); } }
+
+.egg__canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; cursor: grab; }
+
+.egg[data-dragging] .egg__canvas { cursor: grabbing; }
+
+.egg[data-stage="certified"] .egg__canvas { cursor: crosshair; }
+
+.egg__controls {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  display: flex;
+  gap: 6px;
+  animation: fade-in var(--dur-long) var(--ease-out) 3s both;
+}
+
+.egg__icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--ink-soft);
+  background: rgba(255, 255, 255, .7);
+  transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+}
+
+.egg__icon:hover { color: var(--ink); background: var(--surface); }
+
+.egg__icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+.egg__actions {
+  position: absolute;
+  bottom: max(28px, calc(env(safe-area-inset-bottom) + 16px));
+  right: 16px;
+  left: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  animation: rise-in var(--dur-medium) var(--ease-out) 3s both;
+}
+
+.egg__action {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  background: rgba(255, 255, 255, .8);
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color var(--dur-short) var(--ease-out), transform var(--dur-press) var(--ease-out);
+}
+
+.egg__action:hover { background: var(--surface); }
+
+.egg__action:active { transform: translateY(1px) scale(.985); }
+
+.egg__action--primary { border-color: var(--ink); color: var(--paper); background: var(--ink); }
+
+.egg__action--primary:hover { background: #22355a; }
+
+/* Reduced motion: no shakes, no recede; the certified bench appears as a still. */
+@media (prefers-reduced-motion: reduce) {
+  .egg { background: rgba(246, 243, 235, .9); animation: none; }
+  .egg__controls, .egg__actions { animation: none; }
+  .landing[data-egg] .landing__content { visibility: hidden; }
+}

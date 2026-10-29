@@ -1,7 +1,10 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, type CSSProperties } from 'react';
 import { copy } from '../copy';
 import { useIntroSequence } from '../hooks/useIntroSequence';
 import { RevealText, splitFragments } from './RevealText';
+import { EasterEgg } from '../easteregg/EasterEgg';
+import { SealTrigger } from '../easteregg/SealTrigger';
+import { useEasterEgg } from '../easteregg/useEasterEgg';
 
 interface LandingPageProps {
   onOpenChat: () => void;
@@ -39,6 +42,13 @@ export function LandingPage({
   const intro = useIntroSequence();
   const ctaRef = useRef<HTMLButtonElement>(null);
   const wasActive = useRef(active);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const egg = useEasterEgg(useCallback(() => contentRef.current, []));
+
+  useEffect(() => {
+    // While the egg is open the cover stays on screen but out of reach.
+    contentRef.current?.toggleAttribute('inert', egg.open);
+  }, [egg.open]);
 
   useEffect(() => {
     // Returning from chat: put focus back on the main action.
@@ -70,16 +80,16 @@ export function LandingPage({
   };
 
   return (
-    <section className="landing" data-intro={intro.phase} aria-labelledby="landing-title">
+    <section className="landing" data-intro={intro.phase} data-egg={egg.open || undefined} data-shake={egg.shake || undefined} aria-labelledby="landing-title">
       {intro.phase !== 'landing' ? (
         <div className="intro" data-phase={intro.phase}>
           <p className="intro-line" lang="en">{INTRO_LINE}</p>
           <button className="intro-skip" type="button" lang="en" aria-keyshortcuts="Escape" onClick={intro.skip}>Skip intro</button>
         </div>
       ) : null}
-      <div className="landing__content">
+      <div className="landing__content" ref={contentRef}>
         <div className="landing__masthead reveal-item" style={{ '--i': 0 } as CSSProperties}>
-          <div className="brand-mark" aria-hidden="true">量</div>
+          <SealTrigger shake={egg.shake} onClick={egg.click} />
           <span className="landing__scale" aria-hidden="true" />
         </div>
         <p className="landing__eyebrow"><RevealText text={copy.landing.eyebrow} order={order.eyebrow} /></p>
@@ -106,6 +116,7 @@ export function LandingPage({
         </div>
         <p className="landing__privacy"><RevealText text={copy.landing.privacy} order={order.privacy} /></p>
       </div>
+      {egg.seed ? <EasterEgg seed={egg.seed} sound={egg.sound} onClose={egg.close} /> : null}
     </section>
   );
 }
