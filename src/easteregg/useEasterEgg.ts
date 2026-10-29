@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { harvest, type Harvest } from './harvest';
-import { EggSound } from './sound';
+import { EggSound, haptic } from './sound';
 
 const WINDOW_MS = 1500;
 
@@ -25,10 +25,12 @@ export function useEasterEgg(getRoot: () => HTMLElement | null) {
     clicks.current = [...clicks.current.filter((t) => now - t < WINDOW_MS), now];
     const count = clicks.current.length;
     sound.wake();
+    haptic('knock');
     window.clearTimeout(shakeTimer.current);
     if (count >= 3) {
       clicks.current = [];
       setShake(0);
+      sound.claimSession();
       sound.swell();
       setSeed(harvest(getRoot()));
       return;
@@ -38,7 +40,10 @@ export function useEasterEgg(getRoot: () => HTMLElement | null) {
     shakeTimer.current = window.setTimeout(() => setShake(0), 480);
   }, [seed, sound, getRoot]);
 
-  const close = useCallback((): void => setSeed(null), []);
+  const close = useCallback((): void => {
+    sound.releaseSession();
+    setSeed(null);
+  }, [sound]);
 
   return { open: seed !== null, seed, shake, sound, click, close };
 }

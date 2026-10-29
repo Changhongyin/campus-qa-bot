@@ -110,3 +110,21 @@ export function saveTtsEnabled(enabled: boolean): void {
     return;
   }
 }
+
+const eggMutedKey = 'ldzd-egg-muted';
+
+export function loadEggMuted(): boolean {
+  try {
+    return window.localStorage.getItem(eggMutedKey) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function saveEggMuted(muted: boolean): void {
+  try {
+    window.localStorage.setItem(eggMutedKey, String(muted));
+  } catch {
+    return;
+  }
+}

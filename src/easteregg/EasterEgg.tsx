@@ -48,6 +48,22 @@ export function EasterEgg({ seed, sound, onClose }: EasterEggProps) {
     // The scene is built once per opening; later prop changes do not rebuild it.
   }, []);
 
+  // Browsers suspend audio on their own (iOS interruptions, tab switches, autoplay rules);
+  // any gesture on the bench or the page coming back wakes it again.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return undefined;
+    const unlock = (): void => sound.unlock();
+    const onVisible = (): void => { if (document.visibilityState === 'visible') sound.unlock(); };
+    const events = ['pointerdown', 'touchend', 'keydown'] as const;
+    events.forEach((type) => root.addEventListener(type, unlock, { capture: true, passive: true }));
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      events.forEach((type) => root.removeEventListener(type, unlock, { capture: true }));
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [sound]);
+
   const close = (): void => {
     if (leaving) return;
     setLeaving(true);
@@ -71,7 +87,7 @@ export function EasterEgg({ seed, sound, onClose }: EasterEggProps) {
   const onPointerUp = (): void => { sceneRef.current?.pointerUp(); setDragging(false); };
   const onWheel = (event: WheelEvent): void => { sceneRef.current?.nudge(Math.sign(event.deltaY || event.deltaX) * (event.shiftKey ? 10 : 2)); };
 
-  const toggleMute = (): void => { sound.setMuted(!muted); setMuted(!muted); };
+  const toggleMute = (): void => { sound.wake(); sound.setMuted(!muted); setMuted(!muted); };
 
   return createPortal(
     <div

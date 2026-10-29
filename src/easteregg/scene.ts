@@ -1,5 +1,5 @@
 import type { Glyph, Harvest } from './harvest';
-import type { EggSound } from './sound';
+import { haptic, type EggSound } from './sound';
 
 /**
  * The calibration bench, drawn on one canvas.
@@ -162,6 +162,7 @@ export class Scene {
   private shake = 0;
   private pointer = { x: -1e4, y: -1e4 };
   private leaving = false;
+  private stillCue = 0;
 
   constructor(private readonly canvas: HTMLCanvasElement, seed: Harvest, private readonly opts: SceneOptions) {
     const ctx = canvas.getContext('2d');
@@ -179,6 +180,12 @@ export class Scene {
     if (this.opts.reduced) {
       this.toStatic();
       this.draw();
+      // The still drops the motion, never the sound: the chord and the stamp still land.
+      this.stillCue = window.setTimeout(() => {
+        this.opts.sound.bloom();
+        this.opts.sound.thud();
+        haptic('stamp');
+      }, 600);
       return;
     }
     this.last = performance.now();
@@ -194,6 +201,7 @@ export class Scene {
 
   dispose(): void {
     cancelAnimationFrame(this.raf);
+    window.clearTimeout(this.stillCue);
     this.opts.sound.stopBeat();
   }
 
@@ -357,6 +365,8 @@ export class Scene {
       this.stillN += 1;
     }
     this.opts.sound.ping(b.bin / BINS, 0.8);
+    // Felt only while the operator's hand is on the thimble, never as a background buzz.
+    if (this.dragging || this.time - this.lastInput < 0.5) haptic('reading');
     while (this.bench.length > WINDOW) {
       const old = this.bench.shift() as Bead;
       const col = this.cols[old.bin];
@@ -397,7 +407,7 @@ export class Scene {
         const y = L.srcY + L.sealSize * 0.55;
         this.drop(this.newBead(x, y, L.r * 0.4), x, y);
       }
-      this.opts.sound.setBeat(this.beatHz());
+      if (!this.leaving) this.opts.sound.setBeat(this.beatHz());
       if (Math.abs(this.bias) < TOLERANCE && this.stillN >= LOCK_READINGS && !this.dragging && this.omega === 0) this.lock();
     }
 
@@ -406,6 +416,7 @@ export class Scene {
       this.stamped = true;
       this.shake = 1;
       this.opts.sound.thud();
+      haptic('stamp');
     }
     this.shake = Math.max(0, this.shake - dt * 4);
 
