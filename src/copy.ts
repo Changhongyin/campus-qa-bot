@@ -103,4 +103,12 @@ export const copy = {
   assistant: {
     fallbackError: '暂时无法生成回答，请重试。',
   },
+  easterEgg: {
+    seal: '量字印章',
+    dialog: '彩蛋：计量',
+    close: 'Close',
+    closeLabel: '关闭彩蛋（Esc）',
+    play: 'Play',
+    playLabel: '播放彩蛋',
+  },
 } as const;

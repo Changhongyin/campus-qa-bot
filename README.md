@@ -148,3 +148,70 @@ docs/API.md —— 后端接口契约 v2
 .trae/documents/PRD.md —— 产品需求文档
 .trae/documents/tech-arch.md —— 技术架构文档
 .trae/documents/dev-plan.md —— 里程碑开发计划（M1-M7）
+
+## Easter Egg Integration
+
+A hidden film behind the landing page's masthead seal. Only `.landing__masthead .brand-mark`
+opens it. The chat-header seal, the message avatars and the empty-state seal are not triggers.
+
+**Sequence.** Click 1 shakes the seal (±4px, 120ms). Click 2 shakes it harder (±10px, ±3deg,
+200ms) and mounts the media, hidden, so the film and the anthem start preloading. Click 3 makes the
+page recede (`scale(.92)`, `blur(8px)`, fade, 600ms, with landing text characters leaving in
+sequence). Then the film and the anthem start together. Clicks more than 1.5s apart start the count
+again. `Esc` or **Close** leaves the egg and restores the landing page.
+
+**Clock.** The `<audio>` element is the master clock. Every animation frame the muted `<video>` is
+nudged or seeked to follow it, so `video.currentTime` stays within about 30ms of the anthem. When the
+film ends, the video holds its last frame and the final dynamic stage takes over: a survey grid
+drifting at `60s linear infinite`, a glow breathing at `8s ease-in-out infinite`, and the fine
+graduations of the film's ring turning slowly.
+
+### Assets
+
+| File | Spec |
+|---|---|
+| `public/media/anthem.mp3` | The supplied 校歌 recording, stream copied without re-encoding (only metadata stripped and a Xing header added for exact duration), 128 kb/s, 44.1 kHz stereo, **172.70 s** |
+| `public/media/easteregg.webm` | VP9, 1920x1080, 30 fps, 5181 frames, **172.70 s**, no audio track, no text of any kind |
+| `public/media/easteregg.mp4` | H.264 fallback, same picture and duration, no audio track |
+| `public/media/easteregg-final.jpg` | The film's last frame, used as the final stage's base layer if the video cannot be decoded |
+
+The film is rendered by `scripts/easteregg/render_film.py` (numpy + skia-python + ffmpeg) straight from
+the anthem. Its sections are cut on times measured in the recording (`CUES` in the script), and the
+anthem's loudness drives the glow. Re-render with:
+
+```bash
+python scripts/easteregg/render_film.py --audio public/media/anthem.mp3 --out-dir public/media
+```
+
+### Timing: `D` and `REVEAL_AT_SECONDS`
+
+- **`D` = 172.70 s** (audio 172.6955 s, video 5181 frames at 30 fps = 172.700 s).
+- The anthem's last line is "…我的名字叫**计量**". Measured with speech recognition and the loudness
+  envelope: **计 from 158.10 s**, a breath, **量 from 162.05 s**, held, then released by **169.25 s**.
+  The recording ends with 3.4 s of silence.
+- The brief's default, `D - 4` = 168.70 s, would fall in the reverb tail after "量" has been sung.
+  So, as the brief allows, the window follows the measured span: **`REVEAL_AT_SECONDS = 158.1`**.
+  The film's closing movement is cut to the same marks: the needle sweeps on 计 and locks at
+  162.05 s, the ring opens across the frame on 量, and the needle clears the centre by about 166 s.
+- `src/easteregg/easteregg-cues.ts` also exports `CHARACTER_CUES_SECONDS` (`ji: 158.1`,
+  `liang: 162.05`), `SUNG_END_SECONDS` (169.25) and `FILM_DURATION_SECONDS` (172.7).
+
+### Handoff for the font engineer
+
+- **Reveal container.** `<div className="egg-final-reveal" data-state="awaiting" />` sits centred in
+  `.egg-stage`, which becomes the final dynamic stage. It is mounted when playback starts, not when
+  the film ends, because the reveal cue (158.1 s) comes before `D`. It is empty; inject the characters.
+  Suggested markup: `<p class="egg-reveal-line"><span data-char>计</span><span data-char>量</span></p>`
+  and `<p class="egg-reveal-line" data-motto>…</p>`. Lines stack, character spans never wrap, and
+  sizes come from the on-screen picture height (`--egg-frame-h`), not from a typeface:
+  `--egg-display-size` and `--egg-motto-size`.
+- **Clock.** `useVideoClock()` (in `src/easteregg/EggClock.tsx`) returns
+  `{ currentTime, duration, video }`, refreshed every animation frame. `useEggMedia()` gives the raw
+  `videoRef` and `audioRef`. Cue on `video.currentTime`, never on timers.
+- **Dev overlay.** In `vite` dev builds, the bottom-left corner shows
+  `video.currentTime / video.duration`, the audio time and drift, and whether the reveal cue has passed.
+- **Font slots.** Defined on `:root` in `src/styles/easteregg.css`, with Latin fallbacks only and no
+  web fonts: `--egg-font-display` (计量), `--egg-font-motto` (motto), `--egg-font-ui` (buttons and
+  small UI text). Nothing in the egg sets `font-family` any other way.
+- **Check.** `BASE_URL=http://localhost:5173 node tests/easteregg_e2e.mjs` runs the whole sequence in
+  Chromium and writes screenshots to `screenshots/easteregg-*.png`.

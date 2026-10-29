@@ -9,6 +9,9 @@ import { useSpeechSynthesis } from './hooks/useSpeechSynthesis';
 import { exportConversation } from './lib/export';
 import { listPersonalQa, matchPersonalQa, removePersonalQa, savePersonalQa, type PersonalQaEntry } from './lib/personalQa';
 import { getHealth } from './lib/api';
+import { EasterEgg } from './easteregg/EasterEgg';
+import { EggMediaProvider, useCreateEggMedia } from './easteregg/EggClock';
+import { useEasterEgg } from './easteregg/useEasterEgg';
 import './styles.css';
 
 export default function App() {
@@ -17,6 +20,8 @@ export default function App() {
   const lastSpokenRef = useRef<string | null>(null);
   const [personalOpen, setPersonalOpen] = useState(false);
   const [personalEntries, setPersonalEntries] = useState<PersonalQaEntry[]>(() => listPersonalQa());
+  const eggMedia = useCreateEggMedia();
+  const egg = useEasterEgg(eggMedia);
 
   useEffect(() => {
     document.title = chat.state.view === 'chat' ? copy.app.activeTitle : copy.app.title;
@@ -105,16 +110,24 @@ export default function App() {
   ), [chat, handleSend, handleToggleTts, speech, personalEntries, personalOpen, handleSavePersonal, handleRemovePersonal, handleClear, handleExport]);
 
   return (
-    <main className={chat.state.view === 'chat' ? 'app app--chat' : 'app app--landing'}>
+    <main
+      className={chat.state.view === 'chat' ? 'app app--chat' : 'app app--landing'}
+      data-egg={egg.stage === 'idle' || egg.stage === 'armed' ? undefined : egg.stage}
+      onAnimationEnd={egg.onPageAnimationEnd}
+    >
       <FieldBackdrop />
       <LandingPage
         active={chat.state.view === 'landing'}
+        seal={{ buttonRef: egg.sealRef, shake: egg.shake, onClick: egg.onSealClick, onAnimationEnd: egg.onSealAnimationEnd }}
         onOpenChat={() => { chat.openChat(); sessionStorage.setItem('ldzd-opened', 'true'); }}
         onOpenUpload={() => chat.setUploadOpen(true)}
         contributionsEnabled={chat.state.contributionsEnabled}
       />
       <div className="chat-transition">{chatShell}</div>
       <UploadPanel open={chat.state.uploadOpen} onClose={() => chat.setUploadOpen(false)} />
+      <EggMediaProvider media={eggMedia}>
+        {egg.stage !== 'idle' ? <EasterEgg stage={egg.stage} onEnded={egg.onPlaybackEnded} onClose={egg.close} /> : null}
+      </EggMediaProvider>
     </main>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, type CSSProperties } from 'react';
 import { copy } from '../copy';
 import { useIntroSequence } from '../hooks/useIntroSequence';
 import { RevealText, splitFragments } from './RevealText';
+import { SealTrigger, type SealTriggerProps } from '../easteregg/SealTrigger';
 
 interface LandingPageProps {
   onOpenChat: () => void;
@@ -9,6 +10,8 @@ interface LandingPageProps {
   contributionsEnabled: boolean;
   /** True while the landing view is the current view. */
   active: boolean;
+  /** The masthead seal doubles as the easter egg's hidden trigger. */
+  seal: SealTriggerProps;
 }
 
 const INTRO_LINE = 'Welcome to China Jiliang University';
@@ -35,6 +38,7 @@ export function LandingPage({
   onOpenUpload,
   contributionsEnabled,
   active,
+  seal,
 }: LandingPageProps) {
   const intro = useIntroSequence();
   const ctaRef = useRef<HTMLButtonElement>(null);
@@ -79,7 +83,7 @@ export function LandingPage({
       ) : null}
       <div className="landing__content">
         <div className="landing__masthead reveal-item" style={{ '--i': 0 } as CSSProperties}>
-          <div className="brand-mark" aria-hidden="true">量</div>
+          <SealTrigger {...seal} />
           <span className="landing__scale" aria-hidden="true" />
         </div>
         <p className="landing__eyebrow"><RevealText text={copy.landing.eyebrow} order={order.eyebrow} /></p>
