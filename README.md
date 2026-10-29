@@ -177,16 +177,32 @@ graduations of the film's ring turning slowly.
 | `public/media/easteregg.mp4` | H.264 fallback, same picture and duration, no audio track |
 | `public/media/easteregg-final.jpg` | The film's last frame, used as the final stage's base layer if the video cannot be decoded |
 
-**The film.** A campus anime short in the manner of Makoto Shinkai's films, painted entirely in code:
-noise-generated cumulus, golden-hour light, bloom and lens flares, and a cel-shaded student puppet
-(base, shade and rim light, wind in her hair and skirt). In order: the classroom window at golden
-hour (prelude); walking the Qiantang embankment at dusk under power lines (verse 1); running through
-falling cherry blossoms on campus (spring); the level crossing, the train passing to reveal her, and
-the sunset sky (祖国 / 力量); blue hour (interlude). Verse 2 tells the motto without words. 细量: on a
-rooftop she kneels at a theodolite, then a macro of a vernier scale sliding into agreement, then a star
-held in the crosshair. 精思国计: she sits above the city at night, the streets resolve into a survey
-grid, and she lifts a hand to the Milky Way. The star trails tighten into the graduated circle for
-"计量", and the dawn comes up behind her, small on the hill at the edge of the frame.
+**The film.** A campus anime short in the visual language of Makoto Shinkai's films, painted entirely
+in code. The places are the protagonist; one university student moves through them, mostly small
+against the vista, with close-ups of her profile, her eye, her steps and her hands. Everything is graded
+teal in the shadows and orange in the highlights, with bloom and lens flares.
+
+| Time (s) | Shot |
+|---|---|
+| 0–8.5 | Dawn, the empty classroom: blank blackboard, rows of desks, god rays through the windows, dust |
+| 8.5–14.5 | The corridor: light pools on the polished floor; she walks away into the bright end |
+| 14.5–21 | Her profile against the window sky; a blink; whiteout |
+| 21–31 | Vista: the river at golden hour, the sun bursting through cumulus, power lines; she is a speck on the embankment |
+| 31–36.5 | Close: her steps on the embankment path, long shadow, grass, petals |
+| 36.5–41.5 | The stairwell: a tall window, a shaft of light across the steps |
+| 41.5–49 | Cherry-blossom avenue between the teaching buildings, petals in the wind; she reaches up |
+| 49–55 | 细量: her hands steady a spirit level; the bubble comes to rest between the marks |
+| 55–58.5 | 细量: a vernier slides into agreement |
+| 58.5–61.5 | 细量: her eye at the eyepiece, the scale reflected in the iris |
+| 61.5–72 | The level crossing at sunset: signals, the train passes, and she is there on the far side |
+| 72–81.6 | 力量: a rooftop under a towering cumulonimbus, sun rays fanning out; she lifts a hand |
+| 81.6–92 | Above a sea of clouds at sunset, a tiny figure on a peak |
+| 92–102 | Rain on the street at dusk: a convenience store glows, the lights stretch across wet asphalt; she waits under her umbrella and crosses on green |
+| 102–112.5 | 精思国计: from the hill, the river winds through the city to the horizon as its lights come on |
+| 112.5–125 | A stone stairway up to a pavilion, lanterns and fireflies, the first stars |
+| 125–141 | 精思国计: night over the city, the streets resolving into a survey grid, the Milky Way; the star chart in her hands turns until it agrees with the sky |
+| 141–158.1 | The star trails tighten into the graduated circle |
+| 158.1–172.7 | 计量: the needle locks on 计, the ring opens on 量, dawn rises behind her on the hill; a calm centre for the CSS stage |
 
 It is rendered by `scripts/easteregg/render_film.py` (numpy + pillow + skia-python + ffmpeg) straight
 from the anthem. Its sections are cut on times measured in the recording (`CUES` in the script), and
